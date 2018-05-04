@@ -18,10 +18,11 @@ teiNs = "http://www.tei-c.org/ns/1.0"
 -- * Parse the register of persons
 
 -- | An arrow for parsing the register of persons.
-parseRegisterOfPersons :: ArrowXml a => a XmlTree Person
+parseRegisterOfPersons :: ArrowXml a => a XmlTree Persons
 parseRegisterOfPersons =
-  isElem >>> hasQNameCase (mkNsName "castlist" teiNs) //>
-  parsePerson
+  isElem >>> hasQNameCase (mkNsName "castlist" teiNs) >>>
+  listA (multi parsePerson) >>>
+  arr (Map.fromList . map (\p -> (_person_id p, p)))
   -- FIXME: Do we need to handle castGroup? The only thing, we would
   -- get from it is a shared role description, but nothing substantial
   -- for our questions.
@@ -68,5 +69,6 @@ parseGender =
 readGender :: String -> Maybe Gender
 readGender "m" = Just Male
 readGender "f" = Just Female
+readGender "i" = Just Inter
 readGender "_" = Just Other
 readGender _ = Nothing

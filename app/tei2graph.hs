@@ -9,6 +9,6 @@ main = do
   args <- getArgs
   ps <- runX (readDocument [withValidate no] (args !! 0) >>>
               propagateNamespaces //>
-              parseRegisterOfPersons)
+              single parseRegisterOfPersons)
   putStrLn $ show ps
   putStrLn $ show $ length ps
