@@ -7,6 +7,8 @@ module GraDrAna.Tei
 
 import Text.XML.HXT.Core
 import qualified Data.Map as Map
+import Control.Lens hiding (deep)
+import Text.Read
 
 import GraDrAna.TypeDefs
 import GraDrAna.ArrowXml
@@ -14,7 +16,6 @@ import GraDrAna.ArrowXml
 -- FIXME: ask this from an ArrowReaderT.
 teiNs :: String
 teiNs = "http://www.tei-c.org/ns/1.0"
-
 
 -- * Parse the register of persons
 
@@ -77,22 +78,42 @@ readGender _ = Nothing
 
 -- * Parsing who is present on stage and says something.
 
--- | Parse the roles that take a turn in a scene.
-parseScene :: ArrowXml a => a XmlTree Scene
+-- | Parse the roles that take a turn in a scene.  Important Note:
+-- Higher level scenes have all the speaker turns from lower levels.
+parseScene :: IOSLA (XIOState SceneParserState) XmlTree Scene
 parseScene =
   isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
-  arr (const 1) &&&
+  changeUserState incSceneId >>>
+  (getUserState >>> arr _parser_sceneId) &&&
   (parseSceneLevel `orElse` arrNothing) &&&
-  arr (const $ Just "1.1") &&&
+  (parseSceneCount `orElse` arrNothing) &&&
   (parseSceneHead `orElse` arrNothing) &&&
   parseSpeakers >>>
   arr5 Scene
+  where
+    incSceneId = (\b s -> s & parser_sceneId %~ (+1))
 
 -- | Parse the level of a scene.
-parseSceneLevel :: ArrowXml a => a XmlTree (Maybe String)
+parseSceneLevel :: ArrowXml a => a XmlTree (Maybe Int)
 parseSceneLevel =
   isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
-  getAttrCaseValue "n" >>> arr Just
+  getAttrCaseValue "n" >>> arr readMaybe
+
+-- | Make a scene count from level data and state.
+parseSceneCount :: IOSLA (XIOState SceneParserState) XmlTree (Maybe SceneCount)
+parseSceneCount =
+  (parseSceneLevel `orElse` arrNothing) >>>
+  changeUserState updateSceneCount >>>
+  getUserState >>>
+  arr _parser_sceneCount
+  where
+    updateSceneCount level s = s & parser_sceneCount %~ (incSceneCount level)
+    incSceneCount level oldCnt = fmap incLast $ adjustLevel <$> level <*> oldCnt
+    adjustLevel level oldCnt
+      | level > length oldCnt = oldCnt++[-1] -- 0-indexed
+      | level < length oldCnt = take level oldCnt
+      | otherwise = oldCnt
+    incLast cnt = init cnt ++ [(+1) $ last cnt] -- FIXME?
 
 -- | Parse the head line of a scene.
 parseSceneHead :: ArrowXml a => a XmlTree (Maybe String)

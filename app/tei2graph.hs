@@ -1,7 +1,9 @@
 import System.Environment
 import System.Exit
 import Text.XML.HXT.Core
+import Text.XML.HXT.Arrow.XmlState.RunIOStateArrow (runXIOState, initialState)
 import qualified Data.Map as Map
+import Data.Default.Class
 
 import GraDrAna.Tei
 
@@ -14,7 +16,9 @@ main = do
                  single parseRegisterOfPersons)
   putStrLn $ show roles
   putStrLn $ "Found " ++ (show $ Map.size $ head roles) ++ " persons in the registry."
-  scenes <- runX (constL tree //>
-                  multi parseScene)
+  scenes <- runXIOState
+            (initialState def)
+            (constL tree //>
+             multi parseScene)
   putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
   putStrLn $ show scenes

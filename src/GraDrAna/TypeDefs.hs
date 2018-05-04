@@ -1,6 +1,11 @@
+{-# LANGUAGE TemplateHaskell #-}
 module GraDrAna.TypeDefs where
 
 import qualified Data.Map as Map
+import Control.Lens
+import Data.Default.Class
+
+-- * Persons or rather roles
 
 -- | ADT representing possible genders.
 data Gender = Female | Male | Inter | Other
@@ -20,18 +25,40 @@ data Person = Person
 -- | A map representing the register of persons of a play.
 type Persons = Map.Map PersonId Person
 
+-- * Scenes
+
 type SceneId = Int
 
-type SceneCount = String
+-- | Count of a scene. This is 0-indexed, not 1-indexed as usual in
+-- dramatic texts. So it's e.g. [2, 4] for third act, 5th scene.
+type SceneCount = [Int]
 
 -- | A scene with speakers, ie. a part of a drama.
 data Scene = Scene
-  { _scene_id :: SceneId
-  , _scene_level :: Maybe String
-  , _scene_count :: Maybe SceneCount
-  , _scene_head :: Maybe String
-  , _scene_speakers :: Map.Map PersonId Int
+  { _scene_id :: SceneId       -- ^ the scene's identifier (internal)
+  , _scene_level :: Maybe Int  -- ^ level, e.g. 1 for acts, 2 for scenes
+  , _scene_count :: Maybe SceneCount        -- ^ the count
+  , _scene_head :: Maybe String             -- ^ the scene's heading
+  , _scene_speakers :: Map.Map PersonId Int -- ^ map of active speakers
   } deriving (Show)
 
 -- | A map representing the scenes of a drama.
 type Scenes = Map.Map SceneId Scene
+
+
+-- * Parser state
+
+-- | A record for storing the state of the scene parser.
+data SceneParserState = SceneParserState
+  { _parser_sceneId :: Int
+  , _parser_sceneCount :: Maybe SceneCount
+  }
+
+makeLenses ''SceneParserState
+
+-- | Default state for scene parser.
+instance Default SceneParserState where
+  def = SceneParserState
+        { _parser_sceneId = -1 -- 0-indexed
+        , _parser_sceneCount = Just []
+        }
