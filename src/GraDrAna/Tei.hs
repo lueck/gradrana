@@ -1,6 +1,7 @@
 module GraDrAna.Tei
   ( parseRegisterOfPersons
   , parsePerson
+  , parseScene
   , teiNs
   ) where
 
@@ -32,11 +33,11 @@ parsePerson :: ArrowXml a => a XmlTree Person
 parsePerson =
   isElem >>> hasQNameCase (mkNsName "castitem" teiNs) >>>
   deep parseRoleId &&&
-  (deep parseRoleName `orElse` arr (const Nothing)) &&&
+  (deep parseRoleName `orElse` arrNothing) &&&
   --arr (const $ Just "Role") &&&
-  (deep parseRoleDesc `orElse` arr (const Nothing)) &&&
+  (deep parseRoleDesc `orElse` arrNothing) &&&
   --arr (const $ Just "Desc") &&&
-  (deep parseGender `orElse` arr (const Nothing)) >>>
+  (deep parseGender `orElse` arrNothing) >>>
   arr4 Person
 
 -- | An arrow for parsing the role's identifier.
@@ -72,3 +73,44 @@ readGender "f" = Just Female
 readGender "i" = Just Inter
 readGender "_" = Just Other
 readGender _ = Nothing
+
+
+-- * Parsing who is present on stage and says something.
+
+-- | Parse the roles that take a turn in a scene.
+parseScene :: ArrowXml a => a XmlTree Scene
+parseScene =
+  isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
+  arr (const 1) &&&
+  (parseSceneLevel `orElse` arrNothing) &&&
+  arr (const $ Just "1.1") &&&
+  (parseSceneHead `orElse` arrNothing) &&&
+  parseSpeakers >>>
+  arr5 Scene
+
+-- | Parse the level of a scene.
+parseSceneLevel :: ArrowXml a => a XmlTree (Maybe String)
+parseSceneLevel =
+  isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
+  getAttrCaseValue "n" >>> arr Just
+
+-- | Parse the head line of a scene.
+parseSceneHead :: ArrowXml a => a XmlTree (Maybe String)
+parseSceneHead =
+  getChildren >>>
+  isElem >>> hasQNameCase (mkNsName "head" teiNs) >>>
+  getAllText >>> arr Just
+
+-- | Parse the speakers of a scene. The integer value of a map entry
+-- indicates how often they take their turn.
+parseSpeakers :: ArrowXml a => a XmlTree (Map.Map PersonId Int)
+parseSpeakers =
+  listA (multi parseSpeaker) >>>
+  arr (Map.fromListWith (+))
+
+parseSpeaker :: ArrowXml a => a XmlTree (PersonId, Int)
+parseSpeaker =
+  isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
+  getAttrCaseValue "who" &&&
+  arr (const 1) >>>
+  arr2 (,)

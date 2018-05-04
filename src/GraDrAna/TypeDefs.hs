@@ -19,3 +19,19 @@ data Person = Person
 
 -- | A map representing the register of persons of a play.
 type Persons = Map.Map PersonId Person
+
+type SceneId = Int
+
+type SceneCount = String
+
+-- | A scene with speakers, ie. a part of a drama.
+data Scene = Scene
+  { _scene_id :: SceneId
+  , _scene_level :: Maybe String
+  , _scene_count :: Maybe SceneCount
+  , _scene_head :: Maybe String
+  , _scene_speakers :: Map.Map PersonId Int
+  } deriving (Show)
+
+-- | A map representing the scenes of a drama.
+type Scenes = Map.Map SceneId Scene
