@@ -130,6 +130,7 @@ getAllText = listA (multi (isText >>> getText)) >>> arr concat
 -- | An arrow that returns 'Nothing'.
 arrNothing :: (ArrowXml a) => a XmlTree (Maybe b)
 arrNothing =  arr (const Nothing)
+{-# INLINE arrNothing #-}
 
 -- | construction of a 5 argument arrow from a 5-ary function
 -- |
