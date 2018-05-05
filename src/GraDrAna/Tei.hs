@@ -83,7 +83,7 @@ parseGender =
 readGender :: String -> Maybe Gender
 readGender "m" = Just Male
 readGender "f" = Just Female
-readGender "i" = Just Inter
+readGender "i" = Just Intersexual
 readGender "_" = Just Other
 readGender _ = Nothing
 
