@@ -3,6 +3,7 @@ module GraDrAna.Tei
   , parsePerson
   , parseScene
   , teiNs
+  , runTeiParsers
   ) where
 
 -- | Parsing a TEI encoded play.
@@ -12,11 +13,8 @@ module GraDrAna.Tei
 -- generic parser into a recursive data structure. We get the
 -- interesting data from this 'XmlTree' using arrows.
 
--- | Names of elements and attributes are given all lowercase in order
--- to make them case insensitive. Names from the input file are
--- converted to lowercase, too, before matching.
-
 import Text.XML.HXT.Core
+import Text.XML.HXT.Arrow.XmlState.RunIOStateArrow (runXIOState, initialState)
 import qualified Data.Map as Map
 import Control.Lens hiding (deep)
 import Text.Read
@@ -195,3 +193,21 @@ parseStage :: ArrowXml a => a XmlTree String
 parseStage =
   isElem >>> hasQNameCase (mkNsName "stage" teiNs) >>>
   getAllText
+
+
+-- * Running the parsers
+
+-- | Run parser for register of persons and scenes on a TEI
+-- file. Return a tuple of 'Persons' and a list of 'Scene'.
+runTeiParsers :: String -- ^ file name of TEI file
+              -> IO (Persons, [Scene])
+runTeiParsers fName = do
+  tree <- runX (readDocument [withValidate no] fName >>>
+                propagateNamespaces)
+  roles <- runX (constL tree //>
+                 single parseRegisterOfPersons)
+  scenes <- runXIOState
+            (initialState def)
+            (constL tree //>
+             multi parseScene)
+  return (head roles, scenes)
