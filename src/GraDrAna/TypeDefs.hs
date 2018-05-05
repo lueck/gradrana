@@ -29,15 +29,16 @@ type Persons = Map.Map PersonId Person
 
 type SceneId = Int
 
--- | Count of a scene. This is 0-indexed, not 1-indexed as usual in
--- dramatic texts. So it's e.g. [2, 4] for third act, 5th scene.
-type SceneCount = [Int]
+-- | Number of a scene represented a list of integers to express
+-- nesting. This is 0-indexed, not 1-indexed as usual in dramatic
+-- texts. So it's e.g. [2, 4] for third act, 5th scene.
+type SceneNumber = [Int]
 
 -- | A scene with speakers, ie. a part of a drama.
 data Scene = Scene
   { _scene_id :: SceneId       -- ^ the scene's identifier (internal)
   , _scene_level :: Maybe Int  -- ^ level, e.g. 1 for acts, 2 for scenes
-  , _scene_count :: Maybe SceneCount        -- ^ the count
+  , _scene_number :: Maybe SceneNumber      -- ^ the scene's number
   , _scene_head :: Maybe String             -- ^ the scene's heading
   , _scene_speakers :: Map.Map PersonId Int -- ^ map of active speakers
   } deriving (Show)
@@ -51,7 +52,7 @@ type Scenes = Map.Map SceneId Scene
 -- | A record for storing the state of the scene parser.
 data SceneParserState = SceneParserState
   { _parser_sceneId :: Int
-  , _parser_sceneCount :: Maybe SceneCount
+  , _parser_sceneNumber :: Maybe SceneNumber
   }
 
 makeLenses ''SceneParserState
@@ -60,5 +61,5 @@ makeLenses ''SceneParserState
 instance Default SceneParserState where
   def = SceneParserState
         { _parser_sceneId = -1 -- 0-indexed
-        , _parser_sceneCount = Just []
+        , _parser_sceneNumber = Just []
         }

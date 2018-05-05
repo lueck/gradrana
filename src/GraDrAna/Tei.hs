@@ -5,6 +5,17 @@ module GraDrAna.Tei
   , teiNs
   ) where
 
+-- | Parsing a TEI encoded play.
+
+-- | We don't really parse XML here. With the hxt library
+-- ('Text.XML.HXT') we do not need to touch XML. It is parsed by a
+-- generic parser into a recursive data structure. We get the
+-- interesting data from this 'XmlTree' using arrows.
+
+-- | Names of elements and attributes are given all lowercase in order
+-- to make them case insensitive. Names from the input file are
+-- converted to lowercase, too, before matching.
+
 import Text.XML.HXT.Core
 import qualified Data.Map as Map
 import Control.Lens hiding (deep)
@@ -35,9 +46,7 @@ parsePerson =
   isElem >>> hasQNameCase (mkNsName "castitem" teiNs) >>>
   deep parseRoleId &&&
   (deep parseRoleName `orElse` arrNothing) &&&
-  --arr (const $ Just "Role") &&&
   (deep parseRoleDesc `orElse` arrNothing) &&&
-  --arr (const $ Just "Desc") &&&
   (deep parseGender `orElse` arrNothing) >>>
   arr4 Person
 
@@ -86,7 +95,7 @@ parseScene =
   changeUserState incSceneId >>>
   (getUserState >>> arr _parser_sceneId) &&&
   (parseSceneLevel `orElse` arrNothing) &&&
-  (parseSceneCount `orElse` arrNothing) &&&
+  (parseSceneNumber `orElse` arrNothing) &&&
   (parseSceneHead `orElse` arrNothing) &&&
   parseSpeakers >>>
   arr5 Scene
@@ -99,21 +108,26 @@ parseSceneLevel =
   isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
   getAttrCaseValue "n" >>> arr readMaybe
 
--- | Make a scene count from level data and state.
-parseSceneCount :: IOSLA (XIOState SceneParserState) XmlTree (Maybe SceneCount)
-parseSceneCount =
+-- | Make a scene number from level data and state.
+parseSceneNumber :: IOSLA (XIOState SceneParserState) XmlTree (Maybe SceneNumber)
+parseSceneNumber =
   (parseSceneLevel `orElse` arrNothing) >>>
-  changeUserState updateSceneCount >>>
+  changeUserState updateSceneNumber >>>
   getUserState >>>
-  arr _parser_sceneCount
+  arr _parser_sceneNumber
   where
-    updateSceneCount level s = s & parser_sceneCount %~ (incSceneCount level)
-    incSceneCount level oldCnt = fmap incLast $ adjustLevel <$> level <*> oldCnt
-    adjustLevel level oldCnt
-      | level > length oldCnt = oldCnt++[-1] -- 0-indexed
-      | level < length oldCnt = take level oldCnt
-      | otherwise = oldCnt
-    incLast cnt = init cnt ++ [(+1) $ last cnt] -- FIXME?
+    updateSceneNumber level s = s & parser_sceneNumber %~ (incSceneNumber level)
+    incSceneNumber level oldNo = fmap incLast $ adjustLevel <$> (assertPos level) <*> oldNo
+    adjustLevel level oldNo
+      | level > length oldNo = oldNo++[-1] -- 0-indexed
+      | level < length oldNo = take level oldNo
+      | otherwise = oldNo
+    incLast n = init n ++ [(+1) $ last n]
+    -- Assert level > 0, otherwise the list processing would fail.
+    assertPos Nothing = Nothing
+    assertPos (Just l)
+      | l > 0 = Just l
+      | otherwise = Nothing
 
 -- | Parse the head line of a scene.
 parseSceneHead :: ArrowXml a => a XmlTree (Maybe String)
