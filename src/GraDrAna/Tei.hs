@@ -14,7 +14,7 @@ module GraDrAna.Tei
 -- ('Text.XML.HXT') we do not need to touch XML. It is parsed by a
 -- generic parser into a recursive data structure. We get the
 -- interesting data from this 'XmlTree' using arrows. The generic
--- parser is run by 'runX', see 'runTeiParsers'.
+-- parser is run by 'readDocument' from within 'runTeiParsers'.
 
 import Text.XML.HXT.Core
 import Text.XML.HXT.Arrow.XmlState.RunIOStateArrow (runXIOState, initialState)
