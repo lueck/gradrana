@@ -197,7 +197,7 @@ parseStage =
 
 -- * Running the parsers
 
--- | Run parser for register of persons and scenes on a TEI
+-- | Run parser for the register of persons and the scenes on a TEI
 -- file. Return a tuple of 'Persons' and a list of 'Scene'.
 runTeiParsers :: String -- ^ file name of TEI file
               -> IO (Persons, [Scene])
