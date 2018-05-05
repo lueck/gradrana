@@ -9,9 +9,12 @@ module GraDrAna.ArrowXml
   , hasQNameCase
   , getQNameCase
   , makeQNameCase
+  , qNameCaseIn
+  , stripQNamesCase
   , getAllText
   , arrNothing
   , arr5
+  , arr6
   ) where
 
 import Text.XML.HXT.Core
@@ -82,6 +85,15 @@ getQNameCase :: (ArrowXml a) => a XmlTree QName
 getQNameCase = arrL (maybeToList . (fmap makeQNameCase) . XN.getName)
 {-# INLINE getQNameCase #-}
 
+qNameCaseIn :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
+qNameCaseIn qNames = -- (getQNameCase >>> isA (flip elem qNames)) `guards` this
+  qNameIn qNames -- FIXME: above code does not work
+{-# INLINE qNameCaseIn #-}
+
+stripQNamesCase :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
+stripQNamesCase qNames = processTopDown $ neg $ (qNameCaseIn qNames) `guards` this
+
+
 getAllText :: (ArrowXml a) => a XmlTree String
 getAllText = listA (multi (isText >>> getText)) >>> arr concat
 {-# INLINE getAllText #-}
@@ -92,10 +104,15 @@ arrNothing =  arr (const Nothing)
 
 -- | construction of a 5 argument arrow from a 5-ary function
 -- |
--- | example: @ a1 &&& a2 &&& a3 &&& a5 >>> arr5 f @
-arr5                :: Arrow a => (b1 -> b2 -> b3 -> b4 -> b5 -> c) -> a (b1, (b2, (b3, (b4, b5)))) c
-arr5 f              = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, x5)))) -> f x1 x2 x3 x4 x5)
+-- | example: @ a1 &&& a2 &&& a3 &&& a4 &&& a5 >>> arr5 f @
+arr5 :: Arrow a => (b1 -> b2 -> b3 -> b4 -> b5 -> c) -> a (b1, (b2, (b3, (b4, b5)))) c
+arr5 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, x5)))) -> f x1 x2 x3 x4 x5)
 {-# INLINE arr5 #-}
+
+-- | construction of a 6 argument arrow from a 6-ary function
+arr6 :: Arrow a => (b1 -> b2 -> b3 -> b4 -> b5 -> b6 -> c) -> a (b1, (b2, (b3, (b4, (b5, b6))))) c
+arr6 f = arr (\ ~(x1, ~(x2, ~(x3, ~(x4, (x5, x6))))) -> f x1 x2 x3 x4 x5 x6)
+{-# INLINE arr6 #-}
 
 
 play :: String -> IO ()
