@@ -22,6 +22,17 @@ data Person = Person
   , _person_gender :: Maybe Gender  -- ^ the role's gender
   } deriving (Show)
 
+makeLenses ''Person
+
+-- | Default values of a 'Person' record.
+instance Default Person where
+  def = Person
+        { _person_id = ""
+        , _person_role = Nothing
+        , _person_desc = Nothing
+        , _person_gender = Nothing
+        }
+
 -- | A map representing the register of persons of a play.
 type Persons = Map.Map PersonId Person
 
