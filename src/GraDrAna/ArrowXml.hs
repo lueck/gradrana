@@ -5,6 +5,7 @@ module GraDrAna.ArrowXml
   , stripNames
   , stripQNames
   , getAttrCaseValue
+  , getAttrCaseValue0
   , hasQNameCase
   , getQNameCase
   , makeQNameCase
@@ -53,6 +54,17 @@ getAttrCaseValue n =
     n' = upper n
     upper = map toUpper
 {-# INLINE getAttrCaseValue #-}
+
+-- | Like 'getAttrCaseValue', but fails if the attribute does not exist
+getAttrCaseValue0 :: (ArrowXml a) => String -> a XmlTree String
+getAttrCaseValue0 n =
+  getAttrl >>>
+  hasNameWith ((==n') . upper . localPart) >>>
+  xshow getChildren
+  where
+    n' = upper n
+    upper = map toUpper
+{-# INLINE getAttrCaseValue0 #-}
 
 caseFun :: Char -> Char
 caseFun = toUpper
