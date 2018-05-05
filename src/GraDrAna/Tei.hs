@@ -6,12 +6,15 @@ module GraDrAna.Tei
   , runTeiParsers
   ) where
 
--- | Parsing a TEI encoded play.
+-- | Parsing a TEI encoded play. Use 'runTeiParses' for getting the
+-- register of persons and a list of scene records with speakers and
+-- turn taking.
 
 -- | We don't really parse XML here. With the hxt library
 -- ('Text.XML.HXT') we do not need to touch XML. It is parsed by a
 -- generic parser into a recursive data structure. We get the
--- interesting data from this 'XmlTree' using arrows.
+-- interesting data from this 'XmlTree' using arrows. The generic
+-- parser is run by 'runX', see 'runTeiParsers'.
 
 import Text.XML.HXT.Core
 import Text.XML.HXT.Arrow.XmlState.RunIOStateArrow (runXIOState, initialState)
