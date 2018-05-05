@@ -9,5 +9,6 @@ main = do
   args <- getArgs
   (roles, scenes) <- runTeiParsers (args !! 0)
   putStrLn $ "Found " ++ (show $ Map.size roles) ++ " persons in the registry."
+  putStrLn $ show roles
   putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
   putStrLn $ show scenes
