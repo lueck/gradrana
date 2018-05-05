@@ -78,7 +78,7 @@ parseRoleDesc =
 parseGender :: ArrowXml a => a XmlTree (Maybe Gender)
 parseGender =
   isElem >>> hasQNameCase (mkNsName "role" teiNs) >>>
-  getAttrCaseValue "gender" >>> arr readGender
+  getAttrCaseValue0 "gender" >>> arr readGender
 
 readGender :: String -> Maybe Gender
 readGender "m" = Just Male
