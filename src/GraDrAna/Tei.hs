@@ -20,6 +20,7 @@ import Text.XML.HXT.Core
 import qualified Data.Map as Map
 import Control.Lens hiding (deep)
 import Text.Read
+import Data.Maybe
 
 import GraDrAna.TypeDefs
 import GraDrAna.ArrowXml
@@ -143,9 +144,25 @@ parseSpeakers =
   listA (multi parseSpeaker) >>>
   arr (Map.fromListWith (+))
 
+-- | @Maybe PersonId@ would not be a valid key type, so the string
+-- "UNKNOWN" is used when no speaker name was found.
 parseSpeaker :: ArrowXml a => a XmlTree (PersonId, Int)
 parseSpeaker =
   isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
-  getAttrCaseValue "who" &&&
+  parseWhoSpeaks >>> arr (fromMaybe "UNKNOWN") &&&
   arr (const 1) >>>
   arr2 (,)
+
+-- | Parse who's speaking. First try to get the information from the
+-- @who@ attribute of the @sp@ element. If it is not present, try to
+-- get the text node from the @speaker@ element. If that fails to,
+-- 'Nothing' is returned.
+parseWhoSpeaks :: ArrowXml a => a XmlTree (Maybe PersonId)
+parseWhoSpeaks =
+  isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
+  (getAttrCaseValue0 "who" >>> arr Just)
+  `orElse`
+  (deep (isElem >>> hasQNameCase (mkNsName "speaker" teiNs)) >>>
+    getAllText >>> arr Just)
+  `orElse`
+  arrNothing
