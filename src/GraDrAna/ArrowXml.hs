@@ -22,6 +22,9 @@ import qualified Text.XML.HXT.DOM.XmlNode as XN
 import Data.Char
 import Data.Maybe
 
+
+-- * Matching names against a list
+
 nameIn :: (ArrowXml a) => [String] -> a XmlTree XmlTree
 nameIn names = (getName >>> isA (flip elem names)) `guards` this
 {-# INLINE nameIn #-}
@@ -29,6 +32,8 @@ nameIn names = (getName >>> isA (flip elem names)) `guards` this
 qNameIn :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
 qNameIn qNames = (getQName >>> isA (flip elem qNames)) `guards` this
 {-# INLINE qNameIn #-}
+
+-- * Sripping elements from the tree.
 
 stripName :: (ArrowXml a) => String -> a XmlTree XmlTree
 stripName n = processTopDown (filterA $ neg (hasName n))
@@ -45,6 +50,12 @@ stripNames names = processTopDown $ neg $ (nameIn names) `guards` this
 stripQNames :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
 stripQNames qNames = processTopDown $ neg $ (qNameIn qNames) `guards` this
 
+-- * Case insensitive arrows
+
+caseFun :: Char -> Char
+caseFun = toUpper
+{-# INLINE caseFun #-}
+
 -- | Select the value of an attribute of an element node. The
 -- attribute name is matched case insensitive. This always succeeds
 -- with an empty string as default value.
@@ -55,7 +66,7 @@ getAttrCaseValue n =
          getChildren)
   where
     n' = upper n
-    upper = map toUpper
+    upper = map caseFun
 {-# INLINE getAttrCaseValue #-}
 
 -- | Like 'getAttrCaseValue', but fails if the attribute does not exist
@@ -66,12 +77,8 @@ getAttrCaseValue0 n =
   xshow getChildren
   where
     n' = upper n
-    upper = map toUpper
+    upper = map caseFun
 {-# INLINE getAttrCaseValue0 #-}
-
-caseFun :: Char -> Char
-caseFun = toUpper
-{-# INLINE caseFun #-}
 
 makeQNameCase :: QName -> QName
 makeQNameCase n = mkQName (map caseFun $ namePrefix n) (map caseFun $ localPart n) (map caseFun $ namespaceUri n)
@@ -86,21 +93,25 @@ getQNameCase = arrL (maybeToList . (fmap makeQNameCase) . XN.getName)
 {-# INLINE getQNameCase #-}
 
 qNameCaseIn :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
-qNameCaseIn qNames = -- (getQNameCase >>> isA (flip elem qNames)) `guards` this
-  qNameIn qNames -- FIXME: above code does not work
+qNameCaseIn qNames = (getQNameCase >>> isA (flip elem qNames')) `guards` this
+  where
+    qNames' = map makeQNameCase qNames
 {-# INLINE qNameCaseIn #-}
 
 stripQNamesCase :: (ArrowXml a) => [QName] -> a XmlTree XmlTree
 stripQNamesCase qNames = processTopDown $ neg $ (qNameCaseIn qNames) `guards` this
 
+-- * Misc
 
+-- | Get the text nodes from all children and return them as a single
+-- concanated string.
 getAllText :: (ArrowXml a) => a XmlTree String
 getAllText = listA (multi (isText >>> getText)) >>> arr concat
 {-# INLINE getAllText #-}
 
+-- | An arrow that returns 'Nothing'.
 arrNothing :: (ArrowXml a) => a XmlTree (Maybe b)
 arrNothing =  arr (const Nothing)
-
 
 -- | construction of a 5 argument arrow from a 5-ary function
 -- |
