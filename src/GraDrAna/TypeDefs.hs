@@ -41,11 +41,28 @@ data Scene = Scene
   , _scene_number :: Maybe SceneNumber      -- ^ the scene's number
   , _scene_head :: Maybe String             -- ^ the scene's heading
   , _scene_speakers :: Map.Map PersonId Int -- ^ map of active speakers
+  , _scene_turns :: [Turn]                  -- ^ a list of turns
   } deriving (Show)
 
 -- | A map representing the scenes of a drama.
 type Scenes = Map.Map SceneId Scene
 
+-- | A Turn taken by a speaker.
+data Turn = Turn
+  { _turn_speaker :: Maybe PersonId -- ^ the speaker
+  , _turn_turn :: Maybe String      -- ^ the spoken words
+  , _turn_stages :: [String]          -- ^ stage directions during the turn
+  } deriving (Show)
+
+makeLenses ''Turn
+
+-- | Default values of a turn.
+instance Default Turn where
+  def = Turn
+        { _turn_speaker = Nothing
+        , _turn_turn = Nothing
+        , _turn_stages = []
+        }
 
 -- * Parser state
 

@@ -21,6 +21,7 @@ import qualified Data.Map as Map
 import Control.Lens hiding (deep)
 import Text.Read
 import Data.Maybe
+import Data.Default.Class
 
 import GraDrAna.TypeDefs
 import GraDrAna.ArrowXml
@@ -98,8 +99,9 @@ parseScene =
   (parseSceneLevel `orElse` arrNothing) &&&
   (parseSceneNumber `orElse` arrNothing) &&&
   (parseSceneHead `orElse` arrNothing) &&&
-  parseSpeakers >>>
-  arr5 Scene
+  parseSpeakers &&&
+  listA (multi parseTurnTaking) >>>
+  arr6 Scene
   where
     incSceneId = (\b s -> s & parser_sceneId %~ (+1))
 
@@ -166,3 +168,30 @@ parseWhoSpeaks =
     getAllText >>> arr Just)
   `orElse`
   arrNothing
+
+-- | Parse the taking of a turn by a speaker.
+parseTurnTaking :: ArrowXml a => a XmlTree Turn
+parseTurnTaking =
+  isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
+  parseWhoSpeaks &&&
+  parseTurn &&&
+  listA (multi parseStage) >>>
+  arr3 makeTurn
+  where
+    makeTurn who turn stages = def
+      & turn_speaker .~ who
+      & turn_turn .~ (Just turn)
+      & turn_stages .~ stages
+
+-- | Parse a turn, strip speaker name and stage directions.
+parseTurn :: ArrowXml a => a XmlTree String
+parseTurn =
+  stripQNamesCase [ (mkNsName "speaker" teiNs)
+                  , (mkNsName "stage" teiNs) ] >>>
+  getAllText
+
+-- | Parse a stage direction.
+parseStage :: ArrowXml a => a XmlTree String
+parseStage =
+  isElem >>> hasQNameCase (mkNsName "stage" teiNs) >>>
+  getAllText
