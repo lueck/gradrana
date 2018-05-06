@@ -7,7 +7,7 @@ import Data.Default.Class
 
 -- * Persons or rather roles
 
--- | ADT representing possible genders.
+-- | ADT representing genders.
 data Gender = Female | Male | Intersexual | Other
   -- FIXME: Add some more!
   deriving (Show)
