@@ -76,11 +76,10 @@ data Scene = Scene
   , _scene_turns :: [Turn]                  -- ^ a list of turns
   } deriving (Show)
 
--- | Format the scene number to a 1-indexed string.
-formatSceneNumber :: Maybe SceneNumber -> String
-formatSceneNumber n =
-  fromMaybe "Nothing" $
-  fmap (concat . (intersperse ".") . (map (show . (+1)))) n
+-- | Format the scene number to a 1-indexed representation
+-- interspersed with dots.
+formatSceneNumber :: SceneNumber -> String
+formatSceneNumber = concat . (intersperse ".") . map (show . (+1))
 
 -- | A map representing the scenes of a drama.
 type Scenes = Map.Map SceneId Scene

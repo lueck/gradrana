@@ -42,8 +42,11 @@ identifyTurnSpeakerIO reg scene turn = do
   case join $ fmap (identify reg) speaker of
     Just _ -> return ()
     Nothing -> do
-      putStrLn $ "Could not identify speaker '" ++ fromMaybe "" speaker ++
-        "' in scene " ++ (formatSceneNumber $ _scene_number scene) ++ "." 
+      putStrLn $ "Could not identify speaker '" ++
+        fromMaybe "" speaker ++
+        "' in scene " ++
+        (fromMaybe "[unkown]" $ fmap formatSceneNumber $ _scene_number scene) ++
+        "."
   where
     speaker = _turn_speaker turn
 
