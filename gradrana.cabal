@@ -20,6 +20,7 @@ library
   exposed-modules:     GraDrAna.ArrowXml
                      , GraDrAna.TypeDefs
                      , GraDrAna.Tei
+                     , GraDrAna.Identify
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.9 && <4.10
