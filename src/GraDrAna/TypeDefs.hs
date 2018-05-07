@@ -4,6 +4,8 @@ module GraDrAna.TypeDefs where
 import qualified Data.Map as Map
 import Control.Lens
 import Data.Default.Class
+import Data.Maybe
+import Data.List
 
 -- * Persons or rather roles
 
@@ -36,11 +38,30 @@ instance Default Person where
 -- | A map representing the register of persons of a play.
 type Persons = Map.Map PersonId Person
 
+-- | Formatted string from 'Persons' in the play's registry.
+formatPersons :: Persons -> String
+formatPersons persons =
+  "Found " ++ (show $ Map.size persons) ++ " persons in the registry:" ++
+  concatMap (('\n':) . formatPerson . snd) (Map.toList persons) ++ "\n"
+
+-- | Formatted string for a 'Person'.
+formatPerson :: Person -> String
+formatPerson p =
+  (_person_id p) ++ " " ++
+  (fromMaybe "[Name unknow]" $ fmap (map nice) $ _person_role p) ++ " " ++
+  (fromMaybe "[No description]" $ fmap (map nice) $ _person_desc p) ++ " " ++
+  (fromMaybe "[Gender unknown]" $ fmap show $ _person_gender p)
+  where
+    nice :: Char -> Char
+    nice '\n' = ' '
+    nice c = c
+
+
 -- * Scenes
 
 type SceneId = Int
 
--- | Number of a scene represented a list of integers to express
+-- | Number of a scene represented as a list of integers to express
 -- nesting. This is 0-indexed, not 1-indexed as usual in dramatic
 -- texts. So it's e.g. [2, 4] for third act, 5th scene.
 type SceneNumber = [Int]
