@@ -32,7 +32,9 @@ identify reg who
 -- | Identify all the speakers in a list of 'Scene'.    
 identifyTurns :: Persons -> [Scene] -> [Maybe PersonId]
 identifyTurns reg scenes =
-  concatMap ((map (join . (fmap (identify reg)) . _turn_speaker)) . _scene_turns) scenes
+  concatMap ((map (join . (fmap (identify reg)) . _turn_speaker)) . _scene_turns) scenes'
+  where
+    scenes' = filter isSceneP scenes
 
 -- | Like 'identify' but runs in the IO monad a prints a report. For a
 -- helpful report, the 'Scene' is needed and the speaker is taken from
@@ -57,7 +59,9 @@ identifySpeakersIO reg scenes = do
   let ids = identifyTurns reg scenes
       noId = filter isNothing ids
   putStrLn $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified."
-  identifySpeakersIO' reg scenes
+  identifySpeakersIO' reg scenes'
+  where
+    scenes' = filter isSceneP scenes
 
 identifySpeakersIO' :: Persons -> [Scene] -> IO ()
 identifySpeakersIO' _ [] = return ()

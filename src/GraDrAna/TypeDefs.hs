@@ -74,7 +74,17 @@ data Scene = Scene
   , _scene_head :: Maybe String             -- ^ the scene's heading
   , _scene_speakers :: Map.Map PersonId Int -- ^ map of active speakers
   , _scene_turns :: [Turn]                  -- ^ a list of turns
+  }
+  | Act
+  { _act_id :: SceneId       -- ^ the scene's identifier (internal)
+  , _act_level :: Maybe Int  -- ^ level, e.g. 1 for acts, 2 for scenes
+  , _act_number :: Maybe SceneNumber      -- ^ the scene's number
+  , _act_head :: Maybe String             -- ^ the scene's heading
   } deriving (Show)
+
+isSceneP :: Scene -> Bool
+isSceneP (Scene _ _ _ _ _ _) = True
+isSceneP _ = False
 
 -- | Format the scene number to a 1-indexed representation
 -- interspersed with dots.

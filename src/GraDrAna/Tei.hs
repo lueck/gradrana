@@ -1,6 +1,8 @@
 module GraDrAna.Tei
   ( parseRegisterOfPersons
   , parsePerson
+  , parseDivision
+  , parseAct
   , parseScene
   , teiNs
   , runTeiParsers
@@ -90,8 +92,30 @@ readGender _ = Nothing
 
 -- * Parsing who is present on stage and says something.
 
--- | Parse the roles that take a turn in a scene.  Important Note:
--- Higher level scenes have all the speaker turns from lower levels.
+-- | Parse a division of a play. Devisions may be nested, but we
+-- assume that a turns of a devision is the sum of the turns in its
+-- subdevisions. So: Either the devision contains other devisions, or
+-- it contains turns as direct childs.
+parseDivision :: IOSLA (XIOState SceneParserState) XmlTree Scene
+parseDivision =
+  isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
+  ifA (getChildren >>> deep (hasQNameCase (mkNsName "div" teiNs))) parseAct parseScene
+
+-- | Parse an act, ie. a division, that contains other divisions but
+-- no speakers' turns.
+parseAct :: IOSLA (XIOState SceneParserState) XmlTree Scene
+parseAct =
+  isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
+  changeUserState incSceneId >>>
+  (getUserState >>> arr _parser_sceneId) &&&
+  (parseSceneLevel `orElse` arrNothing) &&&
+  (parseSceneNumber `orElse` arrNothing) &&&
+  (parseSceneHead `orElse` arrNothing) >>>
+  arr4 Act
+  where
+    incSceneId = (\b s -> s & parser_sceneId %~ (+1))
+
+-- | Parse a scene with speakers' turns in it.
 parseScene :: IOSLA (XIOState SceneParserState) XmlTree Scene
 parseScene =
   isElem >>> hasQNameCase (mkNsName "div" teiNs) >>>
@@ -212,5 +236,5 @@ runTeiParsers fName = do
   scenes <- runXIOState
             (initialState def)
             (constL tree //>
-             multi parseScene)
+             multi parseDivision)
   return (head roles, scenes)
