@@ -34,29 +34,32 @@ identify reg who
 -- | Identify all the speakers in a list of 'Scene'.    
 identifyTurns :: Persons -> [Scene] -> [Maybe PersonId]
 identifyTurns reg scenes =
-  concatMap ((map (join . (fmap (identify reg)) . _turn_speaker)) . _scene_turns) scenes
+  concatMap ((map (join . (fmap (identify reg)) . _turn_roleId)) . _scene_turns) scenes
 
 -- | Like 'identify' but runs in the IO monad a prints a report. For a
 -- helpful report, the 'Scene' is needed and the speaker is taken from
 -- the 'Turn'.
 identifyTurnSpeakerIO :: Persons -> Scene -> Turn -> IO (Persons)
 identifyTurnSpeakerIO reg scene turn = do
-  case join $ fmap (identify reg) speaker of
+  case join $ fmap (identify reg) (_turn_roleId turn) of
     Just _ -> return reg
     Nothing -> do
       putStrLn $ "Could not identify speaker '" ++
-        fromMaybe "" speaker ++
+        who ++
         "' in scene " ++
         (fromMaybe "[unkown]" $ fmap formatSceneNumber $ _scene_number scene) ++
-        ".\n Adding."
-      return $ Map.insertWith
-        takeOld
-        (fromMaybe "[unkown]" speaker)
-        (def & person_role .~ speaker)
-        reg
+        ".\n\tAdding."
+      return $ Map.insert who (def
+                                & person_id .~ who
+                                & person_role .~ role) reg
   where
-    speaker = _turn_speaker turn
-    takeOld a _ = a
+    role = _turn_role turn
+    who = fromMaybe ("[unkown]" :: PersonId) $ fmap stripCross $ _turn_roleId turn
+    stripCross = stripCross' . trim -- remove '#' from the front
+    stripCross' ('#':r) = r
+    stripCross' r = r
+    trim = dropWhileEnd isSpace . dropWhile isSpace
+
 
 -- | Try to identify the speakers in the play with regard to the
 -- registry of persons. This runs in the IO monad and prints reports.
@@ -69,12 +72,14 @@ identifySpeakersIO reg scenes = do
   -- report after adding
   let ids' = identifyTurns newReg scenes
       noId' = filter isNothing ids'
-  putStrLn $ (show $ length noId') ++ "/" ++ (show $ length ids) ++ " speakers could not be identified."
+  putStrLn $ "After updating the registry " ++
+    (show $ length noId') ++ "/" ++ (show $ length ids) ++
+    " speakers could not be identified."
   return newReg
 
 identifySpeakersIO' :: Persons -> [Scene] -> IO (Persons)
 identifySpeakersIO' reg [] = return reg
 identifySpeakersIO' reg (s:scenes) = do
   ps <- mapM (identifyTurnSpeakerIO reg s) (_scene_turns s)
-  let p = Map.unions ps
+  let p = Map.union reg $ Map.unions ps
   identifySpeakersIO' p scenes

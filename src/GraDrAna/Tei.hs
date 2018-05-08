@@ -144,13 +144,13 @@ parseSceneHead =
 -- indicates how often they take their turn.
 parseSpeakers :: ArrowXml a => a XmlTree (Map.Map PersonId Int)
 parseSpeakers =
-  listA (multi parseSpeaker) >>>
+  listA (multi parseSpeak) >>>
   arr (Map.fromListWith (+))
 
 -- | @Maybe PersonId@ would not be a valid key type, so the string
 -- "UNKNOWN" is used when no speaker name was found.
-parseSpeaker :: ArrowXml a => a XmlTree (PersonId, Int)
-parseSpeaker =
+parseSpeak :: ArrowXml a => a XmlTree (PersonId, Int)
+parseSpeak =
   isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
   parseWhoSpeaks >>> arr (fromMaybe "UNKNOWN") &&&
   arr (const 1) >>>
@@ -170,17 +170,31 @@ parseWhoSpeaks =
   `orElse`
   arrNothing
 
+-- | Parse the @who@ attribute of a @sp@ element or fail.
+parseWho :: ArrowXml a => a XmlTree (Maybe PersonId)
+parseWho =
+  isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
+  getAttrCaseValue0 "who" >>> arr Just
+
+-- | Parse the @speaker@ neested in the current subtree or fail.
+parseSpeaker :: ArrowXml a => a XmlTree (Maybe String)
+parseSpeaker =
+  deep (isElem >>> hasQNameCase (mkNsName "speaker" teiNs)) >>>
+  getAllText >>> arr Just
+
 -- | Parse the taking of a turn by a speaker.
 parseTurnTaking :: ArrowXml a => a XmlTree Turn
 parseTurnTaking =
   isElem >>> hasQNameCase (mkNsName "sp" teiNs) >>>
-  parseWhoSpeaks &&&
+  (parseWho `orElse` arrNothing) &&&
+  (parseSpeaker `orElse` arrNothing) &&&
   parseTurn &&&
   listA (multi parseStage) >>>
-  arr3 makeTurn
+  arr4 makeTurn
   where
-    makeTurn who turn stages = def
-      & turn_speaker .~ who
+    makeTurn who role turn stages = def
+      & turn_roleId .~ who
+      & turn_role .~ role
       & turn_turn .~ (Just turn)
       & turn_stages .~ stages
 
