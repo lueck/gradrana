@@ -13,6 +13,8 @@ import Data.Char
 import Data.List
 import Control.Monad
 import Data.Maybe
+import Data.Default.Class
+import Control.Lens
 
 import GraDrAna.TypeDefs
 
@@ -37,30 +39,42 @@ identifyTurns reg scenes =
 -- | Like 'identify' but runs in the IO monad a prints a report. For a
 -- helpful report, the 'Scene' is needed and the speaker is taken from
 -- the 'Turn'.
-identifyTurnSpeakerIO :: Persons -> Scene -> Turn -> IO ()
+identifyTurnSpeakerIO :: Persons -> Scene -> Turn -> IO (Persons)
 identifyTurnSpeakerIO reg scene turn = do
   case join $ fmap (identify reg) speaker of
-    Just _ -> return ()
+    Just _ -> return reg
     Nothing -> do
       putStrLn $ "Could not identify speaker '" ++
         fromMaybe "" speaker ++
         "' in scene " ++
         (fromMaybe "[unkown]" $ fmap formatSceneNumber $ _scene_number scene) ++
-        "."
+        ".\n Adding."
+      return $ Map.insertWith
+        takeOld
+        (fromMaybe "[unkown]" speaker)
+        (def & person_role .~ speaker)
+        reg
   where
     speaker = _turn_speaker turn
+    takeOld a _ = a
 
 -- | Try to identify the speakers in the play with regard to the
 -- registry of persons. This runs in the IO monad and prints reports.
-identifySpeakersIO :: Persons -> [Scene] -> IO ()
+identifySpeakersIO :: Persons -> [Scene] -> IO (Persons)
 identifySpeakersIO reg scenes = do
   let ids = identifyTurns reg scenes
       noId = filter isNothing ids
   putStrLn $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified."
-  identifySpeakersIO' reg scenes
+  newReg <- identifySpeakersIO' reg scenes
+  -- report after adding
+  let ids' = identifyTurns newReg scenes
+      noId' = filter isNothing ids'
+  putStrLn $ (show $ length noId') ++ "/" ++ (show $ length ids) ++ " speakers could not be identified."
+  return newReg
 
-identifySpeakersIO' :: Persons -> [Scene] -> IO ()
-identifySpeakersIO' _ [] = return ()
+identifySpeakersIO' :: Persons -> [Scene] -> IO (Persons)
+identifySpeakersIO' reg [] = return reg
 identifySpeakersIO' reg (s:scenes) = do
-  mapM (identifyTurnSpeakerIO reg s) (_scene_turns s)
-  identifySpeakersIO' reg scenes
+  ps <- mapM (identifyTurnSpeakerIO reg s) (_scene_turns s)
+  let p = Map.unions ps
+  identifySpeakersIO' p scenes

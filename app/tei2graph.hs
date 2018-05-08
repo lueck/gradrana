@@ -15,8 +15,9 @@ main = do
   putStrLn $ formatPersons roles
 
   -- identify
-  identifySpeakersIO roles scenes
+  reg <- identifySpeakersIO roles scenes
 
   -- putStrLn $ show roles
   -- putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
   -- putStrLn $ show scenes
+  return ()
