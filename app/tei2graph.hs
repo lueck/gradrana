@@ -15,7 +15,7 @@ main = do
   putStrLn $ formatPersons roles
 
   -- identify
-  newReg <- identifySpeakersIO roles scenes
+  newReg <- identifySpeakersAddIO roles scenes
 
   -- print roles again
   putStrLn $ formatPersons newReg
