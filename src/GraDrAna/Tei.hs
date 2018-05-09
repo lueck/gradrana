@@ -35,7 +35,8 @@ teiNs = "http://www.tei-c.org/ns/1.0"
 
 -- * Parse the register of persons
 
--- | An arrow for parsing the register of persons.
+-- | An arrow for parsing the dramatis personae or register of
+-- persons.
 parseRegisterOfPersons :: ArrowXml a => a XmlTree Persons
 parseRegisterOfPersons =
   isElem >>> hasQNameCase (mkNsName "castlist" teiNs) >>>
@@ -43,7 +44,9 @@ parseRegisterOfPersons =
   arr (Map.fromList . map (\p -> (_person_id p, p)))
   -- FIXME: Do we need to handle castGroup? The only thing, we would
   -- get from it is a shared role description, but nothing substantial
-  -- for our questions.
+  -- for our questions.--No! Wait. A shared description may and should
+  -- be used to connect persons, not on the ground of their actions,
+  -- but on the ground of play's setting.
 
 -- | An arrow for parsing a single person for the register of persons.
 parsePerson :: ArrowXml a => a XmlTree Person
