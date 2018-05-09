@@ -96,9 +96,10 @@ type Scenes = Map.Map SceneId Scene
 
 -- | A Turn taken by a speaker.
 data Turn = Turn
-  { _turn_speaker :: Maybe PersonId -- ^ the speaker
+  { _turn_roleId :: Maybe PersonId     -- ^ the speaker's Id
+  , _turn_role :: Maybe String      -- ^ the speaker's role name
   , _turn_turn :: Maybe String      -- ^ the spoken words
-  , _turn_stages :: [String]          -- ^ stage directions during the turn
+  , _turn_stages :: [String]        -- ^ stage directions during the turn
   } deriving (Show)
 
 makeLenses ''Turn
@@ -106,7 +107,8 @@ makeLenses ''Turn
 -- | Default values of a turn.
 instance Default Turn where
   def = Turn
-        { _turn_speaker = Nothing
+        { _turn_roleId = Nothing
+        , _turn_role = Nothing
         , _turn_turn = Nothing
         , _turn_stages = []
         }
