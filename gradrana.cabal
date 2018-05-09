@@ -21,6 +21,7 @@ library
                      , GraDrAna.TypeDefs
                      , GraDrAna.Tei
                      , GraDrAna.Identify
+                     , GraDrAna.Scene
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.9 && <4.10
