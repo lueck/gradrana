@@ -10,7 +10,7 @@
 
 -- | This approach is more accurate than the construction of the graph
 -- on the basis of co-presence in a scene, because a scene may consist
--- of multiple time slices. Although beeing persent in the same scene,
+-- of multiple time slices. Although being present in the same scene,
 -- two persons may not be present simultaneously on stage.
 
 -- | J. Stiller and his co-authors seem to have constructed their
