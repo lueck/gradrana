@@ -6,6 +6,7 @@ import GraDrAna.Tei
 import GraDrAna.TypeDefs
 import GraDrAna.Identify
 import GraDrAna.Splitter.Scene
+import GraDrAna.Graph.CoPresence
 
 main :: IO ()
 main = do
@@ -14,9 +15,12 @@ main = do
   (roles, scenes) <- runTeiParsers (args !! 0) >>=
     uncurry identifySpeakersAddIO >>=
     uncurry adjustRoleIdsIO >>=
-    uncurry splitBySceneIO
+    uncurry splitBySceneIO >>=
+    uncurry copresenceIO
 
   putStrLn $ formatPersons roles
+  putStrLn $ show roles
+
   putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
   putStrLn $ show scenes
 
