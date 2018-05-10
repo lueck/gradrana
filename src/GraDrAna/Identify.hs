@@ -8,6 +8,8 @@ module GraDrAna.Identify
   , identifySpeakersIO
   , identifyTurnSpeakerAddIO
   , identifySpeakersAddIO
+  , adjustRoleIds
+  , adjustRoleIdsIO
   ) where
 
 import qualified Data.Map as Map
@@ -17,6 +19,7 @@ import Control.Monad
 import Data.Maybe
 import Data.Default.Class
 import Control.Lens
+import System.IO
 
 import GraDrAna.TypeDefs
 
@@ -80,19 +83,19 @@ identifySpeakersIO' reg (s:scenes) = do
 
 -- | Like 'identifySpeakersIO' but adds all unkown speakers to the
 -- registry of persons.
-identifySpeakersAddIO :: Persons -> [Scene] -> IO (Persons)
+identifySpeakersAddIO :: Persons -> [Scene] -> IO (Persons, [Scene])
 identifySpeakersAddIO reg scenes = do
   let ids = identifyTurns reg scenes'
       noId = filter isNothing ids
-  putStrLn $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified.\nReporting only some of them:"
+  hPutStrLn stderr $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified.\nNon-exhaustive report where duplicates in subsequent scenes are left:"
   newReg <- identifySpeakersAddIO' reg scenes'
   -- report after adding
   let ids' = identifyTurns newReg scenes'
       noId' = filter isNothing ids'
-  putStrLn $ "After updating the registry " ++
+  hPutStrLn stderr $ "After updating the registry " ++
     (show $ length noId') ++ "/" ++ (show $ length ids) ++
     " speakers could not be identified."
-  return newReg
+  return (newReg, scenes)
   where
     scenes' = filter isSceneP scenes
 
@@ -110,7 +113,7 @@ identifyTurnSpeakerAddIO reg scene turn = do
   case join $ fmap (identify reg) (_turn_roleId turn) of
     Just _ -> return reg
     Nothing -> do
-      putStrLn $ "Could not identify speaker '" ++
+      hPutStrLn stderr $ "Could not identify speaker '" ++
         who ++
         "' or '" ++
         (fromMaybe "[unkown]" role) ++
@@ -127,3 +130,17 @@ identifyTurnSpeakerAddIO reg scene turn = do
     stripCross' ('#':r) = r
     stripCross' r = r
     trim = dropWhileEnd isSpace . dropWhile isSpace
+
+
+-- | Remove the leading character # from the role identifiers of the
+-- turns in scenes.
+adjustRoleIds :: Persons -> [Scene] -> [Scene]
+adjustRoleIds reg scenes = map (scene_turns %~ (adjustTurns reg)) scenes
+  where
+    adjustTurns reg turns = map (adjustTurn reg) turns
+    adjustTurn reg turn = turn & turn_roleId %~ (adjustRoleId reg)
+    adjustRoleId reg oldId = join $ fmap (identify reg) oldId
+
+-- | Like 'adjustRoleIds' but runs in the IO monad.
+adjustRoleIdsIO :: Persons -> [Scene] -> IO (Persons, [Scene])
+adjustRoleIdsIO reg scenes = return (reg, adjustRoleIds reg scenes)

@@ -16,12 +16,15 @@ data Gender = Female | Male | Intersexual | Other
 
 type PersonId = String
 
+type EdgeLabel = Int
+
 -- | A person or rather role.
 data Person = Person
   { _person_id :: PersonId          -- ^ the role's identifier
   , _person_role :: Maybe String    -- ^ the name
   , _person_desc :: Maybe String    -- ^ the role's description
   , _person_gender :: Maybe Gender  -- ^ the role's gender
+  , _person_edgesTo :: Map.Map PersonId EdgeLabel -- ^ edges to other persons
   } deriving (Show)
 
 makeLenses ''Person
@@ -33,6 +36,7 @@ instance Default Person where
         , _person_role = Nothing
         , _person_desc = Nothing
         , _person_gender = Nothing
+        , _person_edgesTo = Map.empty
         }
 
 -- | A map representing the register of persons of a play.
@@ -56,6 +60,27 @@ formatPerson p =
     nice '\n' = ' '
     nice c = c
 
+
+-- * Turns
+
+-- | A Turn taken by a speaker.
+data Turn = Turn
+  { _turn_roleId :: Maybe PersonId     -- ^ the speaker's Id
+  , _turn_role :: Maybe String      -- ^ the speaker's role name
+  , _turn_turn :: Maybe String      -- ^ the spoken words
+  , _turn_stages :: [String]        -- ^ stage directions during the turn
+  } deriving (Show)
+
+makeLenses ''Turn
+
+-- | Default values of a turn.
+instance Default Turn where
+  def = Turn
+        { _turn_roleId = Nothing
+        , _turn_role = Nothing
+        , _turn_turn = Nothing
+        , _turn_stages = []
+        }
 
 -- * Scenes
 
@@ -82,6 +107,29 @@ data Scene = Scene
   , _act_head :: Maybe String             -- ^ the scene's heading
   } deriving (Show)
 
+makeLenses ''Scene
+
+defaultScene :: Scene
+defaultScene = Scene
+  { _scene_id = 0
+  , _scene_level = Nothing
+  , _scene_number = Nothing
+  , _scene_head = Nothing
+  , _scene_speakers = Map.empty
+  , _scene_turns = []
+  }
+
+defaultAct :: Scene
+defaultAct = Act
+  { _act_id = 0
+  , _act_level = Nothing
+  , _act_number = Nothing
+  , _act_head = Nothing
+  }
+
+instance Default Scene where
+  def = defaultScene
+
 isSceneP :: Scene -> Bool
 isSceneP (Scene _ _ _ _ _ _) = True
 isSceneP _ = False
@@ -93,25 +141,6 @@ formatSceneNumber = concat . (intersperse ".") . map (show . (+1))
 
 -- | A map representing the scenes of a drama.
 type Scenes = Map.Map SceneId Scene
-
--- | A Turn taken by a speaker.
-data Turn = Turn
-  { _turn_roleId :: Maybe PersonId     -- ^ the speaker's Id
-  , _turn_role :: Maybe String      -- ^ the speaker's role name
-  , _turn_turn :: Maybe String      -- ^ the spoken words
-  , _turn_stages :: [String]        -- ^ stage directions during the turn
-  } deriving (Show)
-
-makeLenses ''Turn
-
--- | Default values of a turn.
-instance Default Turn where
-  def = Turn
-        { _turn_roleId = Nothing
-        , _turn_role = Nothing
-        , _turn_turn = Nothing
-        , _turn_stages = []
-        }
 
 -- * Parser state
 

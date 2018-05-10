@@ -56,7 +56,13 @@ parsePerson =
   (deep parseRoleName `orElse` arrNothing) &&&
   (deep parseRoleDesc `orElse` arrNothing) &&&
   (deep parseGender `orElse` arrNothing) >>>
-  arr4 Person
+  arr4 mkPerson
+  where
+    mkPerson rid rn desc gender = def
+      & person_id .~ rid
+      & person_role .~ rn
+      & person_desc .~ desc
+      & person_gender .~ gender
 
 -- | An arrow for parsing the role's identifier.
 parseRoleId :: ArrowXml a => a XmlTree PersonId
@@ -129,9 +135,16 @@ parseScene =
   (parseSceneHead `orElse` arrNothing) &&&
   parseSpeakers &&&
   listA (multi parseTurnTaking) >>>
-  arr6 Scene
+  arr6 mkScene
   where
     incSceneId = (\b s -> s & parser_sceneId %~ (+1))
+    mkScene sceneId level number hd speakers turns = def
+      & scene_id .~ sceneId
+      & scene_level .~ level
+      & scene_number .~ number
+      & scene_head .~ hd
+      & scene_speakers .~ speakers
+      & scene_turns .~ turns
 
 -- | Parse the level of a scene.
 parseSceneLevel :: ArrowXml a => a XmlTree (Maybe Int)

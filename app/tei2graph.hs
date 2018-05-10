@@ -9,18 +9,13 @@ import GraDrAna.Identify
 main :: IO ()
 main = do
   args <- getArgs
-  (roles, scenes) <- runTeiParsers (args !! 0)
 
-  -- print roles
+  (roles, scenes) <- runTeiParsers (args !! 0) >>=
+    uncurry identifySpeakersAddIO >>=
+    uncurry adjustRoleIdsIO
+
   putStrLn $ formatPersons roles
+  putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
+  putStrLn $ show scenes
 
-  -- identify
-  newReg <- identifySpeakersAddIO roles scenes
-
-  -- print roles again
-  putStrLn $ formatPersons newReg
-
-  -- putStrLn $ show roles
-  -- putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
-  -- putStrLn $ show scenes
   return ()
