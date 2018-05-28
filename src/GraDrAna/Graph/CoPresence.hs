@@ -13,6 +13,9 @@
 module GraDrAna.Graph.CoPresence
   ( copresenceIO
   , copresence
+  -- * helper functions
+  , mkMapTuples
+  , foldTuples
   ) where
 
 --import Data.Graph.Inductive
@@ -58,12 +61,12 @@ toRegistry reg cs =
   reg  
 
 foldTuples :: Ord k => [[(k, Map.Map k a)]] -> Mappy k a
-foldTuples tups = foldl Map.union Map.empty $ map foldTuples' tups
+foldTuples tups = foldl (Map.unionWith Map.union) Map.empty $ map foldTuples' tups
 
 foldTuples' :: Ord k => [(k, Map.Map k a)] -> Mappy k a
 foldTuples' tups =
   foldl
-  (\reg tup -> (Map.insertWith Map.union) (fst tup) (snd tup) reg)
+  (\reg tup -> Map.insertWith Map.union (fst tup) (snd tup) reg)
   Map.empty
   tups
 

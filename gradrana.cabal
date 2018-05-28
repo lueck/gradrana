@@ -43,3 +43,18 @@ Executable tei2graph
   build-depends:       gradrana
   hs-source-dirs:      app
   default-language:    Haskell2010
+
+Test-Suite test-main
+  type:                exitcode-stdio-1.0
+  main-is:             TestMain.hs
+  other-modules:       Test.GraDrAna.Graph.CoPresence
+  build-depends:       base >=4.9 && <4.10
+                     , hxt
+                     , containers
+                     , lens
+                     , data-default-class
+  build-depends:       gradrana
+                     , HTF >= 0.10.1
+                     , QuickCheck
+  hs-source-dirs:      tests
+  default-language:    Haskell2010
