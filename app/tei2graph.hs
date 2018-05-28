@@ -22,6 +22,6 @@ main = do
   putStrLn $ show roles
 
   putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
-  putStrLn $ show scenes
+  --putStrLn $ show scenes
 
   return ()
