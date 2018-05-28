@@ -21,7 +21,7 @@ twoListsOfPersonIds = [ ["A", "B", "C", "A", "C", "B"]
 test_mkMapTuplesEmpty =
   assertEqual
   ([[]] :: [[(k, Map.Map k Int)]])
-  (mkMapTuples ([[]] :: [[PersonId]]))
+  (mkMapTuples 1 ([[]] :: [[PersonId]]))
 
 test_mkMapTuples1List =
   assertEqual
@@ -29,7 +29,7 @@ test_mkMapTuples1List =
      ("B", Map.fromList [("A", 1), ("C", 1)]),
      ("C", Map.fromList [("A", 1), ("B", 1)])]]
     :: [[(String, Map.Map String Int)]])
-  (mkMapTuples oneListOfPersonIds)
+  (mkMapTuples 1 oneListOfPersonIds)
 
 test_mkMapTuples2Lists =
   assertEqual
@@ -41,12 +41,12 @@ test_mkMapTuples2Lists =
       ("C", Map.fromList [("A", 1), ("D", 1), ("E", 1)]),
       ("E", Map.fromList [("A", 1), ("C", 1), ("D", 1)])]]
     :: [[(String, Map.Map String Int)]])
-  (mkMapTuples twoListsOfPersonIds)
+  (mkMapTuples 1 twoListsOfPersonIds)
 
 test_foldTuplesEmpty =
   assertEqual
   Map.empty
-  (foldTuples $ mkMapTuples ([[]] :: [[PersonId]]))
+  (foldTuples (+) $ mkMapTuples 1 ([[]] :: [[PersonId]]))
 
 test_foldTuples1List =
   assertEqual
@@ -54,14 +54,14 @@ test_foldTuples1List =
    [("A", Map.fromList [("B", 1), ("C", 1)]),
     ("B", Map.fromList [("A", 1), ("C", 1)]),
     ("C", Map.fromList [("A", 1), ("B", 1)])])
-  (foldTuples $ mkMapTuples oneListOfPersonIds)
+  (foldTuples (+) $ mkMapTuples 1 oneListOfPersonIds)
 
 test_foldTuples2Lists =
   assertEqual
   (Map.fromList
-   [("A", Map.fromList [("B", 1), ("C", 1), ("D", 1), ("E", 1)]),
+   [("A", Map.fromList [("B", 1), ("C", 2), ("D", 1), ("E", 1)]),
     ("B", Map.fromList [("A", 1), ("C", 1)]),
-    ("C", Map.fromList [("A", 1), ("B", 1), ("D", 1), ("E", 1)]),
+    ("C", Map.fromList [("A", 2), ("B", 1), ("D", 1), ("E", 1)]),
     ("D", Map.fromList [("A", 1), ("C", 1), ("E", 1)]),
     ("E", Map.fromList [("A", 1), ("C", 1), ("D", 1)])])
-   (foldTuples $ mkMapTuples twoListsOfPersonIds)
+   (foldTuples (+) $ mkMapTuples 1 twoListsOfPersonIds)
