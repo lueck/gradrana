@@ -31,7 +31,7 @@ data TurnQuantity
   , _turnQuant_words :: Int -- ^ amount of words
   , _turnQuant_lines :: Int -- ^ amount of lines
   }
-  deriving (Show)
+  deriving (Show, Eq)
 
 makeLenses ''TurnQuantity
 
