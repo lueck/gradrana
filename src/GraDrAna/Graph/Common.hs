@@ -28,10 +28,7 @@ mkMapTuples
   -> [[(k, Map.Map k a)]]
 mkMapTuples getKey getVal lls =
   map (\l -> map (\el -> ( (getKey el)
-                         , Map.fromList (map (\o -> (getKey o, getVal el)) $
-                                          deleteBy -- FIXME: monologue?
-                                          (\x y -> (getKey x) == (getKey y))
-                                          el l)
+                         , Map.fromList (map (\o -> (getKey o, getVal el)) l)
                          )) l) lls
 
 -- | Stage 1 folding of the result of 'mkMapTuples'. This folds the

@@ -62,6 +62,7 @@ Test-Suite test-main
   type:                exitcode-stdio-1.0
   main-is:             TestMain.hs
   other-modules:       Test.GraDrAna.Graph.CoPresence
+                     , Test.GraDrAna.Graph.TurnQuantity
   build-depends:       base >=4.9 && <4.10
                      , hxt
                      , containers
