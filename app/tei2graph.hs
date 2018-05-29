@@ -17,6 +17,8 @@ main = do
     uncurry adjustRoleIdsIO >>=
     uncurry splitBySceneIO >>=
     uncurry copresenceIO
+  
+  uncurry (copresenceGraphmlWriter "/tmp/graph.xml") (roles, scenes) 
 
   putStrLn $ formatPersons roles
   putStrLn $ show roles

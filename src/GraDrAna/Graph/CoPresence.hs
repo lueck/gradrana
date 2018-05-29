@@ -14,6 +14,9 @@
 module GraDrAna.Graph.CoPresence
   ( copresenceIO
   , copresence
+  -- * graphml output
+  , copresenceGraphmlArr
+  , copresenceGraphmlWriter
   -- * helper functions
   , mkMapTuples
   , foldTuples
@@ -24,8 +27,10 @@ import qualified Data.Map as Map
 import Data.List
 import Data.Maybe
 import Control.Lens
+import Text.XML.HXT.Core
 
 import GraDrAna.TypeDefs
+import GraDrAna.Graph.GraphML
 
 -- | Abstract type alias for abstract helper functions
 type Mappy k a = (Ord k) => Map.Map k (Map.Map k a)
@@ -99,3 +104,31 @@ mkMapTuples ::
   -> [[k]] -- ^ a list of list of mapping keys
   -> [[(k, Map.Map k a)]]
 mkMapTuples ini = map ((\l -> map (\p -> (p, Map.fromList (map (, ini) $ delete p l))) l) . nub)
+
+
+-- * Output to GraphML
+
+copresenceGraphmlArr :: (ArrowXml a) => Persons -> a XmlTree XmlTree
+copresenceGraphmlArr reg =
+  (mkqelem
+    (mkNsName "graph" graphmlNs)
+    [ -- attributes
+      (sattr "id" "G")
+    ,  (sattr "edgedefault" "undirected")
+    ]
+    -- child nodes
+    (vertices ++ edges)
+  )
+  where
+    vertices = map (uncurry mkVertice) $ Map.toAscList reg
+    --mkVertice :: PersonId -> Person -> a XmlTree XmlTree
+    mkVertice k pers =
+      mkqelem
+      (mkNsName "node" graphmlNs)
+      [ (sattr "id" k) ]
+      []
+    edges = []
+      
+copresenceGraphmlWriter :: FilePath -> Persons -> [[Turn]] -> IO [Int]
+copresenceGraphmlWriter fName reg _ =
+  runGraphmlWriter fName (copresenceGraphmlArr reg)

@@ -25,6 +25,7 @@ library
                      , GraDrAna.Graph.Common
                      , GraDrAna.Graph.CoPresence
                      , GraDrAna.Graph.TurnQuantity
+                     , GraDrAna.Graph.GraphML
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.9 && <4.10
