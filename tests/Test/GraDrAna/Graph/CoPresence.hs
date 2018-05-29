@@ -7,8 +7,7 @@ import qualified Data.Map as Map
 
 import GraDrAna.Graph.CoPresence
 import GraDrAna.TypeDefs
-
-sampleFile = "doc/examples/lessing_emilia_1772.TEI-P5.xml"
+import qualified GraDrAna.Graph.Common as G
 
 oneListOfPersonIds :: [[PersonId]]
 oneListOfPersonIds = [["A", "B", "C", "A", "C", "B"]]
@@ -17,6 +16,68 @@ twoListsOfPersonIds :: [[PersonId]]
 twoListsOfPersonIds = [ ["A", "B", "C", "A", "C", "B"]
                       , ["A", "D", "C", "E"]
                       ]
+
+-- * generic functions from 'GraDrAna.Graph.Common'
+
+genMkMapTuples = G.mkMapTuples id (const 1)
+genFoldTuples = G.foldTuples const (+)
+
+test_genMkMapTuplesEmpty =
+  assertEqual
+  ([[]] :: [[(k, Map.Map k Int)]])
+  (genMkMapTuples ([[]] :: [[PersonId]]))
+
+test_genMkMapTuples1List =
+  assertEqual
+  ([[("A", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+     ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+     ("C", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+     ("A", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+     ("C", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+     ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)])]]
+    :: [[(String, Map.Map String Int)]])
+  (genMkMapTuples oneListOfPersonIds)
+
+test_genMkMapTuples2Lists =
+  assertEqual
+  ([ [("A", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+      ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+      ("C", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+      ("A", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+      ("C", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+      ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)])]
+   , [("A", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)]),
+      ("D", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)]),
+      ("C", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)]),
+      ("E", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)])]]
+    :: [[(String, Map.Map String Int)]])
+  (genMkMapTuples twoListsOfPersonIds)
+
+test_genFoldTuplesEmpty =
+  assertEqual
+  Map.empty
+  (genFoldTuples $ genMkMapTuples ([[]] :: [[PersonId]]))
+
+test_genFoldTuples1List =
+  assertEqual
+  (Map.fromList
+   [("A", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+    ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+    ("C", Map.fromList [("A", 1), ("B", 1), ("C", 1)])])
+  (genFoldTuples $ genMkMapTuples oneListOfPersonIds)
+
+test_genFoldTuples2Lists =
+  assertEqual
+  (Map.fromList
+   [("A", Map.fromList [("A", 2), ("B", 1), ("C", 2), ("D", 1), ("E", 1)]),
+    ("B", Map.fromList [("A", 1), ("B", 1), ("C", 1)]),
+    ("C", Map.fromList [("A", 2), ("B", 1), ("C", 2), ("D", 1), ("E", 1)]),
+    ("D", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)]),
+    ("E", Map.fromList [("A", 1), ("C", 1), ("D", 1), ("E", 1)])])
+   (genFoldTuples $ genMkMapTuples twoListsOfPersonIds)
+
+
+-- * deprecated functions from 'GraDrAna.Graph.CoPresence'
 
 test_mkMapTuplesEmpty =
   assertEqual
