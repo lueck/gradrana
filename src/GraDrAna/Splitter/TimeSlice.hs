@@ -25,5 +25,5 @@
 -- a human time slice splitter.
 
 
-module GraDrAna.TimeSlice where
+module GraDrAna.Splitter.TimeSlice where
 
