@@ -7,6 +7,7 @@ import GraDrAna.TypeDefs
 import GraDrAna.Identify
 import GraDrAna.Splitter.Scene
 import GraDrAna.Graph.CoPresence
+import GraDrAna.Graph.Common
 
 main :: IO ()
 main = do
@@ -18,10 +19,10 @@ main = do
     uncurry splitBySceneIO >>=
     uncurry copresenceIO
   
-  uncurry (copresenceGraphmlWriter "/tmp/graph.xml") (roles, scenes) 
+  uncurry (copresenceGraphmlWriter "/tmp/graph.xml") (roles, scenes)
 
   putStrLn $ formatPersons roles
-  putStrLn $ show roles
+  putStrLn $ show $ undirected $ rmLoops roles
 
   putStrLn $ "Found " ++ show (length scenes) ++ " scenes."
   --putStrLn $ show scenes

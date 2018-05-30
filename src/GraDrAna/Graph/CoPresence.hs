@@ -68,6 +68,8 @@ toRegistry reg cs =
 
 -- * Output to GraphML
 
+-- | An arrow that generates a GraphML graph from the edges given in
+-- the registry of 'Persons'.
 copresenceGraphmlArr :: (ArrowXml a) => Persons -> a XmlTree XmlTree
 copresenceGraphmlArr reg =
   (mkqelem
@@ -87,8 +89,19 @@ copresenceGraphmlArr reg =
       (mkNsName "node" graphmlNs)
       [ (sattr "id" k) ]
       []
-    edges = []
-      
+    edges = concat $ map (uncurry mkEdges) $ Map.toAscList $ undirected $ rmLoops reg
+    mkEdges k pers = map (uncurry (mkEdge k)) $ Map.toAscList $ _person_edgesTo pers
+    mkEdge from to label =
+      mkqelem
+      (mkNsName "edge" graphmlNs)
+      [ (sattr "id" $ from ++ "-" ++ to)
+      , (sattr "source" from)
+      , (sattr "target" to)
+      ]
+      []
+
+
+-- | Generate a GraphML representation of a play.
 copresenceGraphmlWriter :: FilePath -> Persons -> [[Turn]] -> IO [Int]
 copresenceGraphmlWriter fName reg _ =
   runGraphmlWriter fName (copresenceGraphmlArr reg)
