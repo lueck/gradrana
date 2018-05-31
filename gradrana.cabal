@@ -23,6 +23,7 @@ library
                      , GraDrAna.Identify
                      , GraDrAna.Config
                      , GraDrAna.App
+                     , GraDrAna.IO
                      , GraDrAna.Splitter.Scene
                      , GraDrAna.Graph.Common
                      , GraDrAna.Graph.CoPresence

@@ -6,6 +6,7 @@ import Control.Monad.Reader
 
 import GraDrAna.App
 import GraDrAna.Config
+import GraDrAna.IO
 import GraDrAna.Tei
 import GraDrAna.TypeDefs
 import GraDrAna.Identify
@@ -18,9 +19,9 @@ main = runGraDrAnaApp app def
 
 app :: App ()
 app = do
-  args <- liftIO getArgs
-
-  (roles, scenes) <- runTeiParsers (args !! 0) >>=
+  (roles, scenes) <-
+    loadContents >>=
+    runTeiParsers >>=
     uncurry identifySpeakersAddIO >>=
     uncurry adjustRoleIdsIO >>=
     uncurry splitByScene >>=

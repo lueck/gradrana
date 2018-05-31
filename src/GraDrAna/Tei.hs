@@ -258,10 +258,10 @@ parseStage =
 
 -- | Run parser for the register of persons and the scenes on a TEI
 -- file. Return a tuple of 'Persons' and a list of 'Scene'.
-runTeiParsers :: String -- ^ file name of TEI file
+runTeiParsers :: String -- ^ the play as a string
               -> App (Persons, [Scene])
-runTeiParsers fName = do
-  tree <- liftIO $ runX (readDocument [withValidate no] fName >>>
+runTeiParsers play = do
+  tree <- liftIO $ runX (readString [withValidate no] play >>>
                          propagateNamespaces)
   roles <- liftIO $ runX (constL tree //>
                           single parseRegisterOfPersons)
