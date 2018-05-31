@@ -17,6 +17,7 @@ import Data.Maybe
 import Control.Lens
 import Data.Default.Class
 
+import GraDrAna.App
 import GraDrAna.TypeDefs
 import GraDrAna.Graph.Common
 
@@ -80,8 +81,8 @@ type Dlina = [[Maybe TurnQuantity]]
 -- | Return a list of pairs of 'PersonId' and 'TurnQuantity' for each
 -- segment of a play, e.g. for each time slice. This can be used to
 -- generate the "Zwischenformat" of the dlina project.
-dlina :: [[Turn]] -> Dlina
-dlina turns =
+dlinaPure :: [[Turn]] -> Dlina
+dlinaPure turns =
   map (getDlinas . (foldTuplesStage1 addQuant)) $
   mkMapTuples _turnQuant_roleId id $
   quantities turns
@@ -89,6 +90,6 @@ dlina turns =
     getDlinas m = map (uncurry getDlina) $ Map.toList m
     getDlina _ mp = fmap snd $ listToMaybe $ Map.toList mp
 
--- | Like 'dlina' but runs in the IO monad.
-dlinaIO :: Persons -> [[Turn]] -> IO (Persons, Dlina)
-dlinaIO reg turns = return (reg , (dlina turns))
+-- | Like 'dlinaPure' but runs in the 'App' monad transformer stack.
+dlina :: Persons -> [[Turn]] -> App (Persons, Dlina)
+dlina reg turns = return (reg , (dlinaPure turns))

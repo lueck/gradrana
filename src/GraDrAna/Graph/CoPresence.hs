@@ -12,8 +12,8 @@
 -- approach of J. Stiller et al. 2003.
 
 module GraDrAna.Graph.CoPresence
-  ( copresenceIO
-  , copresence
+  ( copresence
+  , copresencePure
   -- * graphml output
   , copresenceGraphmlArr
   , copresenceGraphmlWriter
@@ -26,6 +26,7 @@ import Data.Maybe
 import Control.Lens
 import Text.XML.HXT.Core
 
+import GraDrAna.App
 import GraDrAna.TypeDefs
 import GraDrAna.Graph.GraphML
 import GraDrAna.Graph.Common
@@ -36,17 +37,17 @@ import GraDrAna.Graph.Common
 -- persons.
 type CoMap = Mappy PersonId Int
 
--- | Run 'copresence' in the IO monad. The signature fits the data
--- flow.
-copresenceIO :: Persons -> [[Turn]] -> IO (Persons, [[Turn]])
-copresenceIO reg turns = return ((copresence reg turns), turns) 
+-- | Run 'copresence' in a monad with the 'Config' present. The
+-- signature fits the data flow.
+copresence :: AppConfig m => Persons -> [[Turn]] -> m (Persons, [[Turn]])
+copresence reg turns = return ((copresencePure reg turns), turns)
 
 -- | Calculate the co-present persons from the turns. This is the
 -- workhorse of the construction of the copresence graph. The edges
 -- are stored to the map of 'Person' records. It's not a graph, but
 -- aggregate data for constructing the graph.
-copresence :: Persons -> [[Turn]] -> Persons
-copresence reg turns =
+copresencePure :: Persons -> [[Turn]] -> Persons
+copresencePure reg turns =
   toRegistry reg $
   foldTuples const (+) $
   mkMapTuples id (const 1) $
@@ -102,6 +103,6 @@ copresenceGraphmlArr reg =
 
 
 -- | Generate a GraphML representation of a play.
-copresenceGraphmlWriter :: FilePath -> Persons -> [[Turn]] -> IO [Int]
+copresenceGraphmlWriter :: FilePath -> Persons -> [[Turn]] -> App [Int]
 copresenceGraphmlWriter fName reg _ =
   runGraphmlWriter fName (copresenceGraphmlArr reg)

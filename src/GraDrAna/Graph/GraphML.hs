@@ -1,6 +1,9 @@
 module GraDrAna.Graph.GraphML where
 
 import Text.XML.HXT.Core
+import Control.Monad.Trans
+
+import GraDrAna.App
 
 
 graphmlNs :: String
@@ -16,11 +19,11 @@ xsiNs = "http://www.w3.org/2001/XMLSchema-instance"
 runGraphmlWriter ::
   FilePath                                 -- ^ the output file
   -> IOSLA (XIOState ()) XmlTree XmlTree -- ^ arrow for making the graph element
-  -> IO [Int]
+  -> App [Int]
 runGraphmlWriter fName body = do
-  rc <- runX (mkGraphmlDoc body >>>
-              writeDocument [withIndent yes] fName >>>
-              getErrStatus)
+  rc <- liftIO $ runX (mkGraphmlDoc body >>>
+                       writeDocument [withIndent yes] fName >>>
+                       getErrStatus)
   return rc
 
 mkGraphmlDoc :: (ArrowXml a)

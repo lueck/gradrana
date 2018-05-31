@@ -25,7 +25,9 @@ import Control.Lens hiding (deep)
 import Text.Read
 import Data.Maybe
 import Data.Default.Class
+import Control.Monad.Trans
 
+import GraDrAna.App
 import GraDrAna.TypeDefs
 import GraDrAna.ArrowXml
 
@@ -257,13 +259,13 @@ parseStage =
 -- | Run parser for the register of persons and the scenes on a TEI
 -- file. Return a tuple of 'Persons' and a list of 'Scene'.
 runTeiParsers :: String -- ^ file name of TEI file
-              -> IO (Persons, [Scene])
+              -> App (Persons, [Scene])
 runTeiParsers fName = do
-  tree <- runX (readDocument [withValidate no] fName >>>
-                propagateNamespaces)
-  roles <- runX (constL tree //>
-                 single parseRegisterOfPersons)
-  scenes <- runXIOState
+  tree <- liftIO $ runX (readDocument [withValidate no] fName >>>
+                         propagateNamespaces)
+  roles <- liftIO $ runX (constL tree //>
+                          single parseRegisterOfPersons)
+  scenes <- liftIO $ runXIOState
             (initialState def)
             (constL tree //>
              multi parseDivision)
