@@ -13,6 +13,7 @@ import GraDrAna.Identify
 import GraDrAna.Splitter.Scene
 import GraDrAna.Graph.CoPresence
 
+-- | Default configuration for an application.
 instance Default Config where
   def = Config
     { _cfg_inFile = Nothing
