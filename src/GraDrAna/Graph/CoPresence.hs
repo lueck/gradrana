@@ -77,7 +77,7 @@ copresenceGraphmlArr reg =
     (mkNsName "graph" graphmlNs)
     [ -- attributes
       (sattr "id" "G")
-    ,  (sattr "edgedefault" "undirected")
+    , (sattr "edgedefault" "undirected")
     ]
     -- child nodes
     (vertices ++ edges)
@@ -89,7 +89,11 @@ copresenceGraphmlArr reg =
       mkqelem
       (mkNsName "node" graphmlNs)
       [ (sattr "id" k) ]
-      []
+      [ (mkqelem
+         (mkNsName "data" graphmlNs)
+         [ (sattr "key" nodeLabelEl) ]
+         [ (txt $ fromMaybe "" $ _person_role pers)]
+        )]
     edges = concat $ map (uncurry mkEdges) $ Map.toAscList $ undirected $ rmLoops reg
     mkEdges k pers = map (uncurry (mkEdge k)) $ Map.toAscList $ _person_edgesTo pers
     mkEdge from to label =
@@ -99,7 +103,11 @@ copresenceGraphmlArr reg =
       , (sattr "source" from)
       , (sattr "target" to)
       ]
-      []
+      [ (mkqelem
+         (mkNsName "data" graphmlNs)
+         [ (sattr "key" edgeWeightEl) ]
+         [ (txt $ show label)]
+        )]
 
 
 -- | Generate a GraphML representation of a play.

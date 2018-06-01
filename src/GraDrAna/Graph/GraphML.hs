@@ -17,6 +17,14 @@ graphmlSchemaLoc = "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"
 xsiNs :: String
 xsiNs = "http://www.w3.org/2001/XMLSchema-instance"
 
+nodeLabelEl :: String
+nodeLabelEl = "d0"
+
+nodeWeightEl :: String
+nodeWeightEl = "d1"
+
+edgeWeightEl :: String
+edgeWeightEl = "d2"
 
 runGraphmlWriter ::
   IOSLA (XIOState ()) XmlTree XmlTree -- ^ arrow for making the graph element
@@ -43,6 +51,32 @@ mkGraphmlDoc graphEl =
       , (sattr "xmlns:xsi" xsiNs)
       , (sattr "xsi:schemaLocation" $ graphmlNs ++ " " ++ graphmlSchemaLoc)
       ]
-      [ graphEl ] -- child nodes
+      (keys ++ [graphEl]) -- child nodes
     )
   ]
+  where
+    keys = [ (mkqelem
+              (mkQName "" "key" graphmlNs)
+              [ (sattr "id" nodeLabelEl)
+              , (sattr "for" "node")
+              , (sattr "attr.name" "label")
+              , (sattr "attr.type" "string")
+              ]
+              [])
+           , (mkqelem
+              (mkQName "" "key" graphmlNs)
+              [ (sattr "id" nodeWeightEl)
+              , (sattr "for" "node")
+              , (sattr "attr.name" "weight")
+              , (sattr "attr.type" "double")
+              ]
+              [])
+           , (mkqelem
+              (mkQName "" "key" graphmlNs)
+              [ (sattr "id" edgeWeightEl)
+              , (sattr "for" "edge")
+              , (sattr "attr.name" "weight")
+              , (sattr "attr.type" "double")
+              ]
+              [])
+           ]
