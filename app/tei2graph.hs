@@ -1,21 +1,10 @@
-import System.Environment
-import System.Exit
-import qualified Data.Map as Map
 import Data.Default.Class
-import Control.Monad.Reader
 import Options.Applicative
 import Data.Semigroup
 
 import GraDrAna.App
 import GraDrAna.Config
 import GraDrAna.Opts
-import GraDrAna.IO
-import GraDrAna.Tei
-import GraDrAna.TypeDefs
-import GraDrAna.Identify
-import GraDrAna.Splitter.Scene
-import GraDrAna.Graph.CoPresence
-import GraDrAna.Graph.Common
 
 
 run :: ConfiguredAppOpts -> IO ()
@@ -27,5 +16,5 @@ main = execParser opts >>= run
     opts = info
            (configuredAppOpts_ <**> helper)
            (fullDesc
-            <> progDesc "Choose a method to generate graph data and an output format."
-            <> header "tei2graph - generate a graph from a play encoded in TEI format")
+            <> progDesc "tei2graph reads a play encoded in TEI format and generates a graph representing the social network of the play's persons. tei2graph does not visualize the network, but writes a file in a common format, e.g. GraphML for external visualization tools like Gephi.\n\ntei2graph is highly configurable and knows several approaches to graph construction from dramatic texts."
+            <> header "tei2graph - generate a social network graph from a play encoded in TEI format")
