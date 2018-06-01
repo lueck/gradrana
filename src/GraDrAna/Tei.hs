@@ -26,6 +26,7 @@ import Text.Read
 import Data.Maybe
 import Data.Default.Class
 import Control.Monad.Trans
+import Control.Monad.Reader
 
 import GraDrAna.App
 import GraDrAna.TypeDefs
@@ -258,10 +259,11 @@ parseStage =
 
 -- | Run parser for the register of persons and the scenes on a TEI
 -- file. Return a tuple of 'Persons' and a list of 'Scene'.
-runTeiParsers :: String -- ^ the play as a string
-              -> App (Persons, [Scene])
-runTeiParsers play = do
-  tree <- liftIO $ runX (readString [withValidate no] play >>>
+runTeiParsers :: App (Persons, [Scene])
+runTeiParsers = do
+  play <- asks _cfg_inFile
+  -- Passing "" to readDocument makes it read from stdin
+  tree <- liftIO $ runX (readDocument [withValidate no] (fromMaybe "" play) >>>
                          propagateNamespaces)
   roles <- liftIO $ runX (constL tree //>
                           single parseRegisterOfPersons)

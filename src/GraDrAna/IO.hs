@@ -6,7 +6,7 @@ import Control.Monad.Reader
 import qualified Data.Bool as B
 
 import GraDrAna.App
-import GraDrAna.Config
+
 
 -- | Load the contents of input file given in '_cfg_inFile'. If this
 -- is 'Nothing' read from stdin instead.
@@ -15,6 +15,14 @@ loadContents = maybe readStdIn readInFile =<< asks _cfg_inFile
   where
     readStdIn = liftIO $ hGetContents stdin
     readInFile = liftIO . readFile
+
+-- | Write to the output file given in '_cfg_outFile'. If this is
+-- 'Nothing' write to stdout instead.
+writeOutput :: String -> App ()
+writeOutput r = maybe writeStdOut writeOutFile =<< asks _cfg_outFile
+  where
+    writeStdOut = liftIO $ hPutStrLn stdout r
+    writeOutFile = liftIO . (flip writeFile r)
 
 
 type LogLevel = Int

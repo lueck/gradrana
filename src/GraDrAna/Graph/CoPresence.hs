@@ -103,6 +103,5 @@ copresenceGraphmlArr reg =
 
 
 -- | Generate a GraphML representation of a play.
-copresenceGraphmlWriter :: FilePath -> Persons -> [[Turn]] -> App [Int]
-copresenceGraphmlWriter fName reg _ =
-  runGraphmlWriter fName (copresenceGraphmlArr reg)
+copresenceGraphmlWriter :: Persons -> [[Turn]] -> App [Int]
+copresenceGraphmlWriter reg _ = runGraphmlWriter (copresenceGraphmlArr reg)

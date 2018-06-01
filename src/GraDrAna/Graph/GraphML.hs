@@ -2,6 +2,8 @@ module GraDrAna.Graph.GraphML where
 
 import Text.XML.HXT.Core
 import Control.Monad.Trans
+import Control.Monad.Reader
+import Data.Maybe
 
 import GraDrAna.App
 
@@ -17,14 +19,15 @@ xsiNs = "http://www.w3.org/2001/XMLSchema-instance"
 
 
 runGraphmlWriter ::
-  FilePath                                 -- ^ the output file
-  -> IOSLA (XIOState ()) XmlTree XmlTree -- ^ arrow for making the graph element
+  IOSLA (XIOState ()) XmlTree XmlTree -- ^ arrow for making the graph element
   -> App [Int]
-runGraphmlWriter fName body = do
-  rc <- liftIO $ runX (mkGraphmlDoc body >>>
-                       writeDocument [withIndent yes] fName >>>
-                       getErrStatus)
-  return rc
+runGraphmlWriter body = do
+  outFile <- asks _cfg_outFile
+  -- Passing "-" to writeDocument means to write to stdout
+  liftIO $ runX
+    (mkGraphmlDoc body >>>
+      writeDocument [withIndent yes] (fromMaybe "-" outFile) >>>
+      getErrStatus)
 
 mkGraphmlDoc :: (ArrowXml a)
   => a XmlTree XmlTree        -- ^ arrow for making the graph element

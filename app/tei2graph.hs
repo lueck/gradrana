@@ -15,19 +15,18 @@ import GraDrAna.Graph.CoPresence
 import GraDrAna.Graph.Common
 
 main :: IO ()
-main = runGraDrAnaApp app def
+main = runGraDrAnaApp configuredApp def
 
 app :: App ()
 app = do
   (roles, scenes) <-
-    loadContents >>=
     runTeiParsers >>=
     uncurry identifySpeakersAdd >>=
     uncurry adjustRoleIds >>=
     uncurry splitByScene >>=
     uncurry copresence
   
-  uncurry (copresenceGraphmlWriter "/tmp/graph.xml") (roles, scenes)
+  uncurry copresenceGraphmlWriter (roles, scenes)
 
   liftIO $ putStrLn $ formatPersons roles
   liftIO $ putStrLn $ show $ undirected $ rmLoops roles

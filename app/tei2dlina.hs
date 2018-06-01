@@ -20,7 +20,6 @@ main = runGraDrAnaApp app def
 app :: App ()
 app = do
   (roles, turnQuant) <-
-    loadContents >>=
     runTeiParsers >>=
     uncurry identifySpeakersAdd >>=
     uncurry adjustRoleIds >>=
