@@ -19,7 +19,7 @@ instance Default Config where
     { _cfg_inFile = Nothing
     , _cfg_outFile = Nothing
     , _cfg_logFile = Nothing
-    , _cfg_logLevel = 0
+    , _cfg_logLevel = 100
     , _cfg_loadContents = loadContents
     , _cfg_parsePlay = runTeiParsers
     , _cfg_identifyAddSpeakers = identifySpeakersAdd
