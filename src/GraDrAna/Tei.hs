@@ -271,4 +271,5 @@ runTeiParsers = do
             (initialState def)
             (constL tree //>
              multi parseDivision)
-  return (head roles, scenes)
+  -- assert that we have at least an empty registry of persons
+  return (head (roles ++ [Map.empty]), scenes)
