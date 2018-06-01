@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 -- | Parsers for command line options of GraDrAna applications.
 
 module GraDrAna.Opts where
@@ -31,14 +32,14 @@ playIn_ = optional $ strOption
   ( long "in"
   <> short 'i'
   <> metavar "INFILE"
-  <> help "Path to the file with play. Defaults to stdin.")
+  <> help "Path to the file containing the play. If this option is not given, the play is read from standard input.")
 
 graphOut_ :: Parser (Maybe FilePath)
 graphOut_ = optional $ strOption
   ( long "out"
   <> short 'o'
   <> metavar "OUTFILE"
-  <> help "Path to the file, where the graph data should be written to. Defaults to stdout.")
+  <> help "Path to the file, where the graph data are be written to. If this option is not given, the output is written to standard output.")
 
 splitter_ :: Parser Splitter
 splitter_ = scene_ <|> timeSlice_
@@ -66,7 +67,7 @@ turnQuantity_ :: Parser Graph
 turnQuantity_ = flag CoPresence TurnQuantity
   ( long "turnquantity"
   <> short 'Q'
-  <> help "Generate the graph data based on the quantity of the persons turns i.e. the amount of utterance. The quantity is calculated from the count of turns, the amount of words uttered, the amount of characters uttered, the amount of lines filled by a person, when the other person is present. This generates a directed graph.")
+  <> help "Generate the graph data based on the quantity of the persons turns i.e. the amount of utterances. The quantity is calculated from the count of turns, the amount of words uttered, the amount of characters uttered, the amount of lines filled by a person, when the other person is present. This generates a directed graph.")
 
 graphOutputFormat_ :: Parser GraphOutputFormat
 graphOutputFormat_ = graphml_ <|> rawPersons_ <|> rawTurns_
