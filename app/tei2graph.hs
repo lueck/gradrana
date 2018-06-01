@@ -22,8 +22,8 @@ app = do
   (roles, scenes) <-
     loadContents >>=
     runTeiParsers >>=
-    uncurry identifySpeakersAddIO >>=
-    uncurry adjustRoleIdsIO >>=
+    uncurry identifySpeakersAdd >>=
+    uncurry adjustRoleIds >>=
     uncurry splitByScene >>=
     uncurry copresence
   

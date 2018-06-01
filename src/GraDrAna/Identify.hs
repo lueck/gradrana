@@ -1,15 +1,16 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- | Functions for identifying a speaker as a person from the registry
 -- of persons.
 
 module GraDrAna.Identify
   ( identify
   , identifyTurns
-  , identifyTurnSpeakerIO
-  , identifySpeakersIO
-  , identifyTurnSpeakerAddIO
-  , identifySpeakersAddIO
+  , identifyTurnSpeaker
+  , identifySpeakers
+  , identifyTurnSpeakerAdd
+  , identifySpeakersAdd
+  , adjustRoleIdsPure
   , adjustRoleIds
-  , adjustRoleIdsIO
   ) where
 
 import qualified Data.Map as Map
@@ -24,6 +25,7 @@ import Control.Monad.Trans
 
 import GraDrAna.TypeDefs
 import GraDrAna.App
+import GraDrAna.IO
 
 -- | The main function for identifying a speaker as a person from the
 -- registry of persons.
@@ -45,11 +47,11 @@ identifyTurns reg scenes =
     scenes' = filter isSceneP scenes
 
 
--- | Like 'identify' but runs in the IO monad a prints a report. For a
+-- | Like 'identify' but runs in the App monad a prints a report. For a
 -- helpful report, the 'Scene' is needed and the speaker is taken from
 -- the 'Turn'.
-identifyTurnSpeakerIO :: Persons -> Scene -> Turn -> App ()
-identifyTurnSpeakerIO reg scene turn = do
+identifyTurnSpeaker :: Persons -> Scene -> Turn -> App ()
+identifyTurnSpeaker reg scene turn = do
   case join $ fmap (identify reg) speaker of
     Just _ -> return ()
     Nothing -> do
@@ -65,56 +67,56 @@ identifyTurnSpeakerIO reg scene turn = do
     speaker = _turn_roleId turn
 
 -- | Try to identify the speakers in the play with regard to the
--- registry of persons. This runs in the IO monad and prints reports.
-identifySpeakersIO :: Persons -> [Scene] -> App ()
-identifySpeakersIO reg scenes = do
+-- registry of persons. This runs in the App monad and prints reports.
+identifySpeakers :: Persons -> [Scene] -> App ()
+identifySpeakers reg scenes = do
   let ids = identifyTurns reg scenes
       noId = filter isNothing ids
   liftIO $ putStrLn $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified."
-  identifySpeakersIO' reg scenes'
+  identifySpeakers' reg scenes'
   where
     scenes' = filter isSceneP scenes
 
-identifySpeakersIO' :: Persons -> [Scene] -> App ()
-identifySpeakersIO' _ [] = return ()
-identifySpeakersIO' reg (s:scenes) = do
-  mapM (identifyTurnSpeakerIO reg s) (_scene_turns s)
-  identifySpeakersIO' reg scenes
+identifySpeakers' :: Persons -> [Scene] -> App ()
+identifySpeakers' _ [] = return ()
+identifySpeakers' reg (s:scenes) = do
+  mapM (identifyTurnSpeaker reg s) (_scene_turns s)
+  identifySpeakers' reg scenes
 
 
--- | Like 'identifySpeakersIO' but adds all unkown speakers to the
+-- | Like 'identifySpeakers' but adds all unkown speakers to the
 -- registry of persons.
-identifySpeakersAddIO :: Persons -> [Scene] -> App (Persons, [Scene])
-identifySpeakersAddIO reg scenes = do
+identifySpeakersAdd :: Persons -> [Scene] -> App (Persons, [Scene])
+identifySpeakersAdd reg scenes = do
   let ids = identifyTurns reg scenes'
       noId = filter isNothing ids
-  liftIO $ hPutStrLn stderr $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified.\nNon-exhaustive report where duplicates in subsequent scenes are left:"
-  newReg <- identifySpeakersAddIO' reg scenes'
+  logLevel 10 $ (show $ length noId) ++ "/" ++ (show $ length ids) ++ " speakers could not be identified.\nNon-exhaustive report where duplicates in subsequent scenes are left:"
+  newReg <- identifySpeakersAdd' reg scenes'
   -- report after adding
   let ids' = identifyTurns newReg scenes'
       noId' = filter isNothing ids'
-  liftIO $ hPutStrLn stderr $ "After updating the registry " ++
+  logLevel 10 $ "After updating the registry " ++
     (show $ length noId') ++ "/" ++ (show $ length ids) ++
     " speakers could not be identified."
   return (newReg, scenes)
   where
     scenes' = filter isSceneP scenes
 
-identifySpeakersAddIO' :: Persons -> [Scene] -> App (Persons)
-identifySpeakersAddIO' reg [] = return reg
-identifySpeakersAddIO' reg (s:scenes) = do
-  ps <- mapM (identifyTurnSpeakerAddIO reg s) (_scene_turns s)
+identifySpeakersAdd' :: Persons -> [Scene] -> App (Persons)
+identifySpeakersAdd' reg [] = return reg
+identifySpeakersAdd' reg (s:scenes) = do
+  ps <- mapM (identifyTurnSpeakerAdd reg s) (_scene_turns s)
   let p = Map.union reg $ Map.unions ps
-  identifySpeakersAddIO' p scenes
+  identifySpeakersAdd' p scenes
 
--- | Like 'identifyTurnSpeakerIO' but adds an unkown speaker to the
+-- | Like 'identifyTurnSpeaker' but adds an unkown speaker to the
 -- registry of persons.
-identifyTurnSpeakerAddIO :: Persons -> Scene -> Turn -> App (Persons)
-identifyTurnSpeakerAddIO reg scene turn = do
+identifyTurnSpeakerAdd :: Persons -> Scene -> Turn -> App (Persons)
+identifyTurnSpeakerAdd reg scene turn = do
   case join $ fmap (identify reg) (_turn_roleId turn) of
     Just _ -> return reg
     Nothing -> do
-      liftIO $ hPutStrLn stderr $ "Could not identify speaker '" ++
+      logLevel 10 $ "Could not identify speaker '" ++
         who ++
         "' or '" ++
         (fromMaybe "[unkown]" role) ++
@@ -135,13 +137,13 @@ identifyTurnSpeakerAddIO reg scene turn = do
 
 -- | Remove the leading character # from the role identifiers of the
 -- turns in scenes.
-adjustRoleIds :: Persons -> [Scene] -> [Scene]
-adjustRoleIds reg scenes = map (scene_turns %~ (adjustTurns reg)) scenes
+adjustRoleIdsPure :: Persons -> [Scene] -> [Scene]
+adjustRoleIdsPure reg scenes = map (scene_turns %~ (adjustTurns reg)) scenes
   where
     adjustTurns reg turns = map (adjustTurn reg) turns
     adjustTurn reg turn = turn & turn_roleId %~ (adjustRoleId reg)
     adjustRoleId reg oldId = join $ fmap (identify reg) oldId
 
--- | Like 'adjustRoleIds' but runs in the IO monad.
-adjustRoleIdsIO :: Persons -> [Scene] -> App (Persons, [Scene])
-adjustRoleIdsIO reg scenes = return (reg, adjustRoleIds reg scenes)
+-- | Like 'adjustRoleIdsPure' but runs in the App monad.
+adjustRoleIds :: AppConfig m => Persons -> [Scene] -> m (Persons, [Scene])
+adjustRoleIds reg scenes = return (reg, adjustRoleIdsPure reg scenes)

@@ -9,6 +9,7 @@ data Config =
   { _cfg_inFile :: Maybe FilePath -- ^ Nothing means stdin
   , _cfg_outFile :: Maybe FilePath -- ^ Nothing means stdout
   , _cfg_logFile :: Maybe FilePath -- ^ Nothing means stderr
+  , _cfg_logLevel :: Int -- ^ Log level
   }
 
 makeLenses ''Config
@@ -18,4 +19,5 @@ instance Default Config where
     { _cfg_inFile = Nothing
     , _cfg_outFile = Nothing
     , _cfg_logFile = Nothing
+    , _cfg_logLevel = 0
     }
