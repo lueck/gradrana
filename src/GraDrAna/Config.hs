@@ -1,3 +1,6 @@
+-- | A default configuration for a GraDrAna application. The 'Config'
+-- type is defined in 'GraDrAna.App'.
+
 module GraDrAna.Config where
 
 import Data.Default.Class
