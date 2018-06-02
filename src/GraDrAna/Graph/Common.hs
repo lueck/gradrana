@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 
 module GraDrAna.Graph.Common
@@ -5,12 +6,14 @@ module GraDrAna.Graph.Common
   ,  mkMapTuples
   , foldTuples
   , foldTuplesStage1
+  , toRegistry
   , rmLoops
   , undirected
   ) where
 
 import qualified Data.Map as Map
 import Data.List
+import Data.Maybe
 import Control.Lens
 
 import GraDrAna.TypeDefs
@@ -63,6 +66,13 @@ foldTuples
 foldTuples combS1 combS2 tups =
   foldl (Map.unionWith (Map.unionWith combS2)) Map.empty $
   map (foldTuplesStage1 combS1) tups
+
+-- | Feed 'Mappy' into the registry of persons.
+toRegistry :: (a -> EdgeLabel) -> Persons -> Mappy PersonId a -> Persons
+toRegistry mkLabel reg cs =
+  Map.mapWithKey
+  (\k p -> p & person_edgesTo .~ (fromMaybe Map.empty $ fmap (Map.map mkLabel) $ Map.lookup k cs))
+  reg
 
 
 -- * Clean up registry of persons

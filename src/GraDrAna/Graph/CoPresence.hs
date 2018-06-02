@@ -25,17 +25,12 @@ import Data.List
 import Data.Maybe
 import Control.Lens
 import Text.XML.HXT.Core
+import Data.Default.Class
 
 import GraDrAna.App
 import GraDrAna.TypeDefs
 import GraDrAna.Graph.GraphML
 import GraDrAna.Graph.Common
-
--- | Intermediate data structure for co-present persons of the
--- play. It's a map of maps, the outer representing the persons (ids
--- only) in the play and the inner representing the edges to other
--- persons.
-type CoMap = Mappy PersonId Int
 
 -- | Run 'copresence' in a monad with the 'Config' present. The
 -- signature fits the data flow.
@@ -48,23 +43,18 @@ copresence reg turns = return ((copresencePure reg turns), turns)
 -- aggregate data for constructing the graph.
 copresencePure :: Persons -> [[Turn]] -> Persons
 copresencePure reg turns =
-  toRegistry reg $
-  foldTuples const (+) $
+  toRegistry mkLabel reg $
+  foldTuples const (+) $        -- for an explanation see tests
   mkMapTuples id (const 1) $
   speakers turns
+  where
+    mkLabel amount = def & edgelabel_copresence .~ (Just amount)
 
 -- | Get the speakers from the turns.
 speakers :: [[Turn]] -> [[PersonId]]
 speakers turns = map getSpeakers turns
   where
     getSpeakers = map ((fromMaybe "UNKOWN") . _turn_roleId)
-
--- | Feed 'CoMap' into the registry of persons.
-toRegistry :: Persons -> CoMap -> Persons
-toRegistry reg cs =
-  Map.mapWithKey
-  (\k p -> p & person_edgesTo .~ (fromMaybe Map.empty $ Map.lookup k cs))
-  reg  
 
 
 -- * Output to GraphML
@@ -106,7 +96,7 @@ copresenceGraphmlArr reg =
       [ (mkqelem
          (mkNsName "data" graphmlNs)
          [ (sattr "key" edgeWeightEl) ]
-         [ (txt $ show label)]
+         [ (txt $ show $ fromMaybe 0 $ _edgelabel_copresence label)]
         )]
 
 

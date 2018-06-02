@@ -16,7 +16,19 @@ data Gender = Female | Male | Intersexual | Other
 
 type PersonId = String
 
-type EdgeLabel = Int
+-- | A record for different variants of edge labels (weights).
+data EdgeLabel = EdgeLabel
+  { _edgelabel_copresence :: Maybe Int -- ^ count of occurance in the same time slice
+  , _edgelabel_turns :: Maybe Int      -- ^ From turns to lines the fields are used
+  , _edgelabel_chars :: Maybe Int      -- ^ to create a directed graph where the edge's
+  , _edgelabel_words :: Maybe Int      -- ^ labels represent the amount of utterances.
+  , _edgelabel_lines :: Maybe Int
+  } deriving (Show)
+
+makeLenses ''EdgeLabel
+
+instance Default EdgeLabel where
+  def = EdgeLabel Nothing Nothing Nothing Nothing Nothing
 
 -- | A person or rather role.
 data Person = Person
