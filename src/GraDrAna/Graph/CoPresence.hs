@@ -1,6 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TupleSections #-}
 
 -- | Construct a graph on the basis of whether two characters are both
 -- present in at least one unit (time slice or scene or something
