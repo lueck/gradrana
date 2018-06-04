@@ -79,6 +79,7 @@ data Config =
   , _cfg_splitScenes :: Persons -> [Scene] -> App (Persons, [[Turn]])
   , _cfg_genGraphData :: Persons -> [[Turn]] -> App (Persons, [[Turn]])
   , _cfg_exportGraph :: Persons -> [[Turn]] -> App [Int]
+  , _cfg_turnQuantity_getEdgeWeight :: EdgeLabel -> String
   }
 
 makeLenses ''Config

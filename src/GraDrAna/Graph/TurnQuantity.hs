@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 -- | Construct a graph on the basis of the quantity of turns (count of
@@ -16,79 +17,82 @@ import qualified Data.Map as Map
 import Data.Maybe
 import Control.Lens
 import Data.Default.Class
+import Control.Applicative
+import Control.Monad.Reader
 
 import GraDrAna.App
 import GraDrAna.TypeDefs
 import GraDrAna.Graph.Common
+import GraDrAna.Graph.GraphML
 
-
--- | A record for representing the quantity of a turn (or of multiple
--- turns).
-data TurnQuantity
-  = TurnQuantity
-  { _turnQuant_roleId :: PersonId
-  , _turnQuant_turns :: Int -- ^ dlina calls it speech_acts, which is not it
-  , _turnQuant_chars :: Int -- ^ amount of characters
-  , _turnQuant_words :: Int -- ^ amount of words
-  , _turnQuant_lines :: Int -- ^ amount of lines
-  }
-  deriving (Show, Eq)
-
-makeLenses ''TurnQuantity
-
--- | Default values of a 'TurnQuantity'. Since we add when collecting
--- turns, we set the default values to the neutral element of
--- addition.
-instance Default TurnQuantity where
-  def = TurnQuantity
-        { _turnQuant_roleId = "UNKNOWN"
-        , _turnQuant_turns = 0
-        , _turnQuant_chars = 0
-        , _turnQuant_words = 0
-        , _turnQuant_lines = 0
-        }
 
 -- | Get the quantity of a turn. TODO: use tcf
-quantity :: Turn -> TurnQuantity
+quantity :: Turn -> EdgeLabel
 quantity t = def
-  & turnQuant_roleId .~ ((fromMaybe "UNKOWN") $ t^.turn_roleId)
-  & turnQuant_turns .~ 1
-  & turnQuant_chars .~ (fromMaybe 0 $ fmap length $ t^.turn_turn)
-  & turnQuant_words .~ (fromMaybe 0 $ fmap (length . words) $ t^.turn_turn)
-  & turnQuant_lines .~ (fromMaybe 0 $ fmap (length . lines) $ t^.turn_turn)
+  & edgelabel_turns .~ (Just 1)
+  & edgelabel_chars .~ (fmap length $ t^.turn_turn)
+  & edgelabel_words .~ (fmap (length . words) $ t^.turn_turn)
+  & edgelabel_lines .~ (fmap (length . lines) $ t^.turn_turn)
 
 -- | Get all the turn quantities of the list of list of turns.
-quantities :: [[Turn]] -> [[TurnQuantity]]
+quantities :: [[Turn]] -> [[EdgeLabel]]
 quantities = map (map quantity)
 
 -- | Add two quantities.
-addQuant :: TurnQuantity -> TurnQuantity -> TurnQuantity
+addQuant :: EdgeLabel -> EdgeLabel -> EdgeLabel
 addQuant a b = a
-  & turnQuant_turns %~ (+ (_turnQuant_turns b))
-  & turnQuant_chars %~ (+ (_turnQuant_chars b))
-  & turnQuant_words %~ (+ (_turnQuant_words b))
-  & turnQuant_lines %~ (+ (_turnQuant_lines b))
+  & edgelabel_turns %~ (liftA2 (+) (_edgelabel_turns b))
+  & edgelabel_chars %~ (liftA2 (+) (_edgelabel_chars b))
+  & edgelabel_words %~ (liftA2 (+) (_edgelabel_words b))
+  & edgelabel_lines %~ (liftA2 (+) (_edgelabel_lines b))
+
+turnQuantity :: AppConfig m => Persons -> [[Turn]] -> m (Persons, [[Turn]])
+turnQuantity reg turns =
+  return $
+  ( toRegistry mkLabel reg $
+    foldTuples addQuant addQuant $
+    mkMapTuples getRoleId quantity turns
+  , turns)
+  where
+    getRoleId r = fromMaybe "UNKNOWN" (r^.turn_roleId)
+    mkLabel = id
+
+
+-- * Output to GraphML
+
+-- | Generate a GraphML representation of a play.
+turnQuantityGraphmlWriter :: Persons -> [[Turn]] -> App [Int]
+turnQuantityGraphmlWriter reg _ = do
+  getEdgeWeight <- asks _cfg_turnQuantity_getEdgeWeight
+  rc <- runGraphmlWriter
+        (mkGraphmlGraph
+         rmLoops
+         getEdgeWeight
+         "directed"
+         reg)
+  return rc
 
 
 -- * Exporting to dlina's "Zwischenformat"
 
--- | Type for exporting to the XML "Zwischenformat" of the dlina project
-type Dlina = [[Maybe TurnQuantity]]
---type Dlina = [[(PersonId, Maybe TurnQuantity)]]
---type Dlina = [Map.Map PersonId (Map.Map PersonId TurnQuantity)]
---type Dlina = [Mappy PersonId TurnQuantity]
+-- FIXME: This is broken!
 
--- | Return a list of pairs of 'PersonId' and 'TurnQuantity' for each
+-- | Type for exporting to the XML "Zwischenformat" of the dlina project
+--type Dlina = [[Maybe EdgeLabel]]
+type Dlina = [[[(Maybe PersonId, EdgeLabel)]]]
+--type Dlina = [Map.Map PersonId (Map.Map PersonId EdgeLabel)]
+--type Dlina = [Mappy PersonId EdgeLabel]
+
+-- | Return a list of pairs of 'PersonId' and 'EdgeLabel' for each
 -- segment of a play, e.g. for each time slice. This can be used to
 -- generate the "Zwischenformat" of the dlina project.
 dlinaPure :: [[Turn]] -> Dlina
 dlinaPure turns =
   map (getDlinas . (foldTuplesStage1 addQuant)) $
-  mkMapTuples _turnQuant_roleId id $
-  quantities turns
+  mkMapTuples (^.turn_roleId) quantity turns
   where
     getDlinas m = map (uncurry getDlina) $ Map.toList m
-    getDlina _ mp = fmap snd $ listToMaybe $ Map.toList mp
+    getDlina _ mp = Map.toList mp -- fmap snd $ listToMaybe $ Map.toList mp
 
 -- | Like 'dlinaPure' but runs in the 'App' monad transformer stack.
 dlina :: Persons -> [[Turn]] -> App (Persons, Dlina)

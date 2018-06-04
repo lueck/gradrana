@@ -12,10 +12,12 @@ import GraDrAna.App
 import GraDrAna.IO
 import GraDrAna.Splitter.Scene
 import GraDrAna.Graph.CoPresence
+import GraDrAna.Graph.TurnQuantity
 
 data Splitter = Scene | TimeSlice
 
 data Graph = CoPresence | TurnQuantity
+  deriving (Eq)
 
 data GraphOutputFormat = GraphML | RawPersons | RawTurns
 
@@ -98,6 +100,14 @@ configuredAppOpts_ = ConfiguredAppOpts
 
 passOpts :: Config -> ConfiguredAppOpts -> Config
 passOpts cfg opts
+  | _cao_graph opts == TurnQuantity
+  = cfgCommon opts
+    (cfg
+     & cfg_genGraphData .~ turnQuantity
+     & cfg_exportGraph .~ (case (_cao_graphOutputFormat opts) of
+                             GraphML -> turnQuantityGraphmlWriter
+                             RawPersons -> rawPersonsOut
+                             RawTurns -> rawTurnsOut))
   | otherwise -- _cao_graph opts == CoPresence
   = cfgCommon opts
     (cfg

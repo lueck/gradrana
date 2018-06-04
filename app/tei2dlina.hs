@@ -3,6 +3,7 @@ import System.Exit
 import qualified Data.Map as Map
 import Data.Default.Class
 import Control.Monad.Reader
+import Control.Lens
 
 import GraDrAna.App
 import GraDrAna.Config
@@ -15,7 +16,7 @@ import GraDrAna.Graph.TurnQuantity
 
 
 main :: IO ()
-main = runGraDrAnaApp app def
+main = runGraDrAnaApp app (def & cfg_logLevel .~ 0)
 
 app :: App ()
 app = do

@@ -4,8 +4,11 @@
 module GraDrAna.Config where
 
 import Data.Default.Class
+import Data.Maybe
+import Control.Lens
 
 import GraDrAna.App
+import GraDrAna.TypeDefs
 
 import GraDrAna.IO
 import GraDrAna.Tei
@@ -27,4 +30,5 @@ instance Default Config where
     , _cfg_splitScenes = splitByScene
     , _cfg_genGraphData = copresence
     , _cfg_exportGraph = copresenceGraphmlWriter
+    , _cfg_turnQuantity_getEdgeWeight = show . (fromMaybe 0) . (^.edgelabel_words)
     }
