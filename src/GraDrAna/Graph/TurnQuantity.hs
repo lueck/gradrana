@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 -- | Construct a graph on the basis of the quantity of turns (count of
 -- turns, count of signifiers (words), count of characters, count of
@@ -11,7 +10,13 @@
 -- 'GraDrAna.Splitter.Scene' this implements the approach of the dlina
 -- project by P. Trilcke et al.
 
-module GraDrAna.Graph.TurnQuantity where
+module GraDrAna.Graph.TurnQuantity
+  ( quantity
+  , addQuant
+  , turnQuantity
+  , turnQuantityGraphmlWriter
+  , dlina
+  ) where
 
 import qualified Data.Map as Map
 import Data.Maybe
@@ -46,6 +51,7 @@ addQuant a b = a
   & edgelabel_words %~ (liftA2 (+) (_edgelabel_words b))
   & edgelabel_lines %~ (liftA2 (+) (_edgelabel_lines b))
 
+-- | Generate data for the graph based on turn quantities.
 turnQuantity :: AppConfig m => Persons -> [[Turn]] -> m (Persons, [[Turn]])
 turnQuantity reg turns =
   return $
