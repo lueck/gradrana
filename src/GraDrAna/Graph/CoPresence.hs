@@ -13,7 +13,6 @@ module GraDrAna.Graph.CoPresence
   ( copresence
   , copresencePure
   -- * graphml output
-  , copresenceGraphmlArr
   , copresenceGraphmlWriter
   ) where
 
