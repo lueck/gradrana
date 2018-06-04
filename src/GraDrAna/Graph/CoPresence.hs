@@ -57,47 +57,12 @@ speakers turns = map getSpeakers turns
 
 -- * Output to GraphML
 
--- | An arrow that generates a GraphML graph from the edges given in
--- the registry of 'Persons'.
-copresenceGraphmlArr :: (ArrowXml a) => Persons -> a XmlTree XmlTree
-copresenceGraphmlArr reg =
-  (mkqelem
-    (mkNsName "graph" graphmlNs)
-    [ -- attributes
-      (sattr "id" "G")
-    , (sattr "edgedefault" "undirected")
-    ]
-    -- child nodes
-    (vertices ++ edges)
-  )
-  where
-    vertices = map (uncurry mkVertice) $ Map.toAscList reg
-    --mkVertice :: PersonId -> Person -> a XmlTree XmlTree
-    mkVertice k pers =
-      mkqelem
-      (mkNsName "node" graphmlNs)
-      [ (sattr "id" k) ]
-      [ (mkqelem
-         (mkNsName "data" graphmlNs)
-         [ (sattr "key" nodeLabelEl) ]
-         [ (txt $ fromMaybe "" $ _person_role pers)]
-        )]
-    edges = concat $ map (uncurry mkEdges) $ Map.toAscList $ undirected $ rmLoops reg
-    mkEdges k pers = map (uncurry (mkEdge k)) $ Map.toAscList $ _person_edgesTo pers
-    mkEdge from to label =
-      mkqelem
-      (mkNsName "edge" graphmlNs)
-      [ (sattr "id" $ from ++ "-" ++ to)
-      , (sattr "source" from)
-      , (sattr "target" to)
-      ]
-      [ (mkqelem
-         (mkNsName "data" graphmlNs)
-         [ (sattr "key" edgeWeightEl) ]
-         [ (txt $ show $ fromMaybe 0 $ _edgelabel_copresence label)]
-        )]
-
-
 -- | Generate a GraphML representation of a play.
 copresenceGraphmlWriter :: Persons -> [[Turn]] -> App [Int]
-copresenceGraphmlWriter reg _ = runGraphmlWriter (copresenceGraphmlArr reg)
+copresenceGraphmlWriter reg _ =
+  runGraphmlWriter
+  (mkGraphmlGraph
+   (undirected . rmLoops)
+   (show . (fromMaybe 0) . (^.edgelabel_copresence))
+   "undirected"
+   reg)

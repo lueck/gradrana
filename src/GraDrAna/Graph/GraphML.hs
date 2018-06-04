@@ -4,8 +4,10 @@ import Text.XML.HXT.Core
 import Control.Monad.Trans
 import Control.Monad.Reader
 import Data.Maybe
+import qualified Data.Map as Map
 
 import GraDrAna.App
+import GraDrAna.TypeDefs
 
 
 graphmlNs :: String
@@ -26,6 +28,15 @@ nodeWeightEl = "d1"
 edgeWeightEl :: String
 edgeWeightEl = "d2"
 
+-- | Write a GraphML representation of the play's graph to the output
+-- file given in the config.
+--
+-- USAGE: See 'turnQuantityGraphmlWriter'.
+--
+-- We could do everything generically asking the config for getters of
+-- the edge weights and other parameters. But that way, too much would
+-- be done behind the scenes and it wouldn't be easy to test, but easy
+-- to break things.
 runGraphmlWriter ::
   IOSLA (XIOState ()) XmlTree XmlTree -- ^ arrow for making the graph element
   -> App [Int]
@@ -80,3 +91,51 @@ mkGraphmlDoc graphEl =
               ]
               [])
            ]
+
+-- | A generic function that creates an arrow for a GraphML
+-- representation of the graph given in the registry of 'Persons'.
+mkGraphmlGraph
+  :: (ArrowXml a)
+  => (Persons -> Persons) -- ^ Function to post-process edges,
+                          -- e.g. remove circles of path length 1.
+  -> (EdgeLabel -> String) -- ^ Function to get the edge weight from
+                           -- the edge label
+  -> String                -- ^ Graph Type, e.g. @"undirected"@.
+  -> Persons               -- ^ the registry of persons
+  -> a XmlTree XmlTree
+mkGraphmlGraph filterEdges getEdgeWeight graphType reg =
+  (mkqelem
+    (mkNsName "graph" graphmlNs)
+    [ -- attributes
+      (sattr "id" "G")
+    , (sattr "edgedefault" graphType)
+    ]
+    -- child nodes
+    (vertices ++ edges)
+  )
+  where
+    vertices = map (uncurry mkVertice) $ Map.toAscList reg
+    --mkVertice :: PersonId -> Person -> a XmlTree XmlTree
+    mkVertice k pers =
+      mkqelem
+      (mkNsName "node" graphmlNs)
+      [ (sattr "id" k) ]
+      [ (mkqelem
+         (mkNsName "data" graphmlNs)
+         [ (sattr "key" nodeLabelEl) ]
+         [ (txt $ fromMaybe "" $ _person_role pers)]
+        )]
+    edges = concat $ map (uncurry mkEdges) $ Map.toAscList $ filterEdges reg
+    mkEdges k pers = map (uncurry (mkEdge k)) $ Map.toAscList $ _person_edgesTo pers
+    mkEdge from to label =
+      mkqelem
+      (mkNsName "edge" graphmlNs)
+      [ (sattr "id" $ from ++ "-" ++ to)
+      , (sattr "source" from)
+      , (sattr "target" to)
+      ]
+      [ (mkqelem
+         (mkNsName "data" graphmlNs)
+         [ (sattr "key" edgeWeightEl) ]
+         [ (txt $ getEdgeWeight label)]
+        )]
